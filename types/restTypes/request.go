@@ -1,4 +1,4 @@
-package types
+package restTypes
 
 import (
 	"time"
@@ -6,11 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type TestProductGroup struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Code        string `json:"code,omitempty"`
-}
+const (
+	CreateItemUrl  = "https://api.moysklad.ru/api/remap/1.2/entity/product"
+	CreateGroupUrl = "https://api.moysklad.ru/api/remap/1.2/entity/productfolder"
+)
 
 type TestProductMeta struct {
 	Meta Meta `json:"meta"`
@@ -22,6 +21,12 @@ type TestProduct struct {
 	Vat           int             `json:"vat"`
 	Weight        int             `json:"weight"`
 	ProductFolder TestProductMeta `json:"productFolder"`
+}
+
+type TestProductGroup struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Code        string `json:"code,omitempty"`
 }
 
 type ProductGroup struct {
@@ -45,13 +50,4 @@ type ProductGroup struct {
 	UseParentVat        bool              `json:"useParentVat,omitempty"`
 	Vat                 int               `json:"vat,omitempty"`
 	VatEnabled          bool              `json:"vatEnabled,omitempty"`
-}
-
-type Meta struct {
-	Href         string `json:"href,omitempty"`         //URL
-	MetadataHref string `json:"metadataHref,omitempty"` //URL
-	Type         string `json:"type,omitempty"`
-	MediaType    string `json:"mediaType,omitempty"`
-	UuidHref     string `json:"uuidHref,omitempty"`     //URL
-	DownloadHref string `json:"downloadHref,omitempty"` //URL
 }

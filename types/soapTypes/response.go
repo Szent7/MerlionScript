@@ -1,4 +1,4 @@
-package types
+package soapTypes
 
 import "encoding/xml"
 
@@ -9,11 +9,6 @@ type ItemMenu struct {
 	Description string   `xml:"Description"`
 }
 
-type ItemMenuReq struct {
-	XMLName xml.Name `xml:"getCatalog"`
-	Cat_id  string   `xml:"cat_id"`
-}
-
 type ItemCatalog struct {
 	XMLName xml.Name `xml:"item"`
 	Name    string   `xml:"Name"`
@@ -21,11 +16,4 @@ type ItemCatalog struct {
 	No      string   `xml:"No"`
 	Weight  float32  `xml:"Weight"`
 	VAT     int      `xml:"VAT"`
-}
-
-type ItemCatalogReq struct {
-	XMLName      xml.Name `xml:"getItems"`
-	Cat_id       string   `xml:"cat_id"`
-	Page         string   `xml:"page"`
-	Rows_on_page string   `xml:"rows_on_page"`
 }
