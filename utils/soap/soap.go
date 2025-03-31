@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"time"
 )
 
@@ -69,11 +67,11 @@ func soapCall(ws string, action string, payloadInterface interface{}) ([]byte, e
 	req.Header.Set("Content-Type", "text/xml; charset=utf-8")
 	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("TC0051161|API:lt2iZpXb41")))
 
-	dump, err := httputil.DumpRequestOut(req, true)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("Dump: %q\n", dump)
+	//dump, err := httputil.DumpRequestOut(req, true)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//fmt.Printf("Dump: %q\n", dump)
 
 	response, err := client.Do(req)
 	if err != nil {

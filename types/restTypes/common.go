@@ -1,5 +1,9 @@
 package restTypes
 
+type MetaMiddle struct {
+	Meta Meta `json:"meta"`
+}
+
 type Meta struct {
 	Href         string `json:"href,omitempty"`         //URL
 	MetadataHref string `json:"metadataHref,omitempty"` //URL

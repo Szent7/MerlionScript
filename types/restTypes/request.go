@@ -7,9 +7,17 @@ import (
 )
 
 const (
-	CreateItemUrl  = "https://api.moysklad.ru/api/remap/1.2/entity/product"
-	CreateGroupUrl = "https://api.moysklad.ru/api/remap/1.2/entity/productfolder"
+	ItemUrl         = "https://api.moysklad.ru/api/remap/1.2/entity/product"
+	GroupUrl        = "https://api.moysklad.ru/api/remap/1.2/entity/productfolder"
+	StoreUrl        = "https://api.moysklad.ru/api/remap/1.2/entity/store"
+	OrganizationUrl = "https://api.moysklad.ru/api/remap/1.2/entity/organization"
+	AcceptanceUrl   = "https://api.moysklad.ru/api/remap/1.2/entity/supply"
 )
+
+type Response struct {
+	Body       []byte
+	StatusCode int
+}
 
 type TestProductMeta struct {
 	Meta Meta `json:"meta"`
@@ -50,4 +58,29 @@ type ProductGroup struct {
 	UseParentVat        bool              `json:"useParentVat,omitempty"`
 	Vat                 int               `json:"vat,omitempty"`
 	VatEnabled          bool              `json:"vatEnabled,omitempty"`
+}
+
+type CreateItem struct {
+	Name    string `json:"name"`
+	Article string `json:"article"`
+}
+
+type UploadImage struct {
+	FileName string `json:"filename"`
+	Content  string `json:"content"`
+}
+
+type Acceptance struct {
+	Organization MetaMiddle     `json:"organization"`
+	Agent        MetaMiddle     `json:"agent"`
+	Store        MetaMiddle     `json:"store"`
+	Description  string         `json:"description"`
+	Applicable   bool           `json:"applicable"`
+	Positions    []PositionsAdd `json:"positions"`
+}
+
+type PositionsAdd struct {
+	//Id       string `json:"id"`
+	Quantity   int        `json:"quantity"`
+	Assortment MetaMiddle `json:"assortment"`
 }

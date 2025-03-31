@@ -1,14 +1,6 @@
 package sklad
 
-import (
-	"MerlionScript/types/restTypes"
-	"MerlionScript/utils/rest"
-	"bytes"
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-)
-
+/*
 func CreateTestItemSklad(product restTypes.TestProduct, credentials string) error {
 	//jsonBody, err := json.Marshal(reqBody)
 	jsonBody, err := json.MarshalIndent(product, "", "  ")
@@ -19,7 +11,7 @@ func CreateTestItemSklad(product restTypes.TestProduct, credentials string) erro
 	}
 	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials))
 	//url := "https://api.moysklad.ru/api/remap/1.2/entity/product"
-	body, err := rest.CreateRequest("POST", restTypes.CreateItemUrl, authHeader, bytes.NewBuffer(jsonBody))
+	body, err := rest.CreateRequest("POST", restTypes.ItemUrl, authHeader, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return err
 	}
@@ -54,7 +46,24 @@ func CreateTestCatSklad(group restTypes.TestProductGroup, credentials string) (r
 	}
 	return meta, nil
 }
+*/
+/*
+func FindItemUUID(id string, credentials string) (string, error) {
+	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials))
+	response, err := rest.CreateRequest("GET", restTypes.ItemUrl+"?search="+me.Vendor_part, authHeader, nil)
+	if err != nil {
+		return false, err
+	}
+	if response.StatusCode != 200 {
+		return false, err
+	}
+	items := restTypes.SearchItem{}
+	if err := json.Unmarshal(response.Body, &items); err != nil {
+		return false, fmt.Errorf("ошибка при декодировании item (checkifexist): %s", err.Error())
+	}
 
+}
+*/
 /*
 func getCatSklad() {
 	//fmt.Println(base64.StdEncoding.EncodeToString([]byte("admin@sandbox1:wolf444466")))
