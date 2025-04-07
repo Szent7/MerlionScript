@@ -1,8 +1,8 @@
 package soap
 
 import (
+	"MerlionScript/keeper"
 	"bytes"
-	"encoding/base64"
 	"encoding/xml"
 	"io"
 	"net/http"
@@ -65,7 +65,7 @@ func soapCall(ws string, action string, payloadInterface interface{}) ([]byte, e
 	req.Header.Set("Accept", "text/xml, multipart/related")
 	req.Header.Set("SOAPAction", action)
 	req.Header.Set("Content-Type", "text/xml; charset=utf-8")
-	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("TC0051161|API:lt2iZpXb41")))
+	req.Header.Set("Authorization", "Basic "+keeper.K.GetMerlionCredentials())
 
 	//dump, err := httputil.DumpRequestOut(req, true)
 	//if err != nil {

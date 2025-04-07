@@ -9,6 +9,7 @@ type Rows struct {
 	Name    string `json:"name"`
 	Group   Group  `json:"group"`
 	Article string `json:"article"`
+	Meta    Meta   `json:"meta"`
 }
 
 type Group struct {
@@ -23,4 +24,10 @@ type RowsStoreOrganization struct {
 	Id        string `json:"id"`
 	Name      string `json:"name"`
 	StoreMeta Meta   `json:"meta"`
+}
+
+type SearchStock struct {
+	AssortmentId string `json:"assortmentId"`
+	StoreId      string `json:"storeId"`
+	Stock        int    `json:"stock"`
 }

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"MerlionScript/keeper"
 	"MerlionScript/types/restTypes"
 	"compress/gzip"
 	"fmt"
@@ -8,7 +9,7 @@ import (
 	"net/http"
 )
 
-func CreateRequest(reqType string, url string, authHeader string, bodyRequest io.Reader) (*restTypes.Response, error) {
+func CreateRequest(reqType string, url string, bodyRequest io.Reader) (*restTypes.Response, error) {
 	req, err := http.NewRequest(reqType, url, bodyRequest)
 	if err != nil {
 		fmt.Println("Ошибка при создании запроса:", err)
@@ -17,9 +18,9 @@ func CreateRequest(reqType string, url string, authHeader string, bodyRequest io
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Accept-Encoding", "gzip")
-	if authHeader != "" {
-		req.Header.Add("Authorization", authHeader)
-	}
+	//if authHeader != "" {
+	req.Header.Add("Authorization", "Basic "+keeper.K.GetMSCredentials())
+	//}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

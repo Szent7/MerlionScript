@@ -4,6 +4,8 @@ import (
 	"MerlionScript/utils/db"
 	"MerlionScript/utils/db/typesDB"
 	"encoding/csv"
+	"fmt"
+	"log"
 	"os"
 )
 
@@ -15,16 +17,30 @@ type CSVFile struct {
 
 var instance *CSVFile
 
-func GetCSVInstance() (*CSVFile, error) {
+// создает файл CSV если его не существует
+func CreateCSVInstance() (*CSVFile, error) {
 	if instance == nil {
 		var err error
 		instance, err = сreateCSV()
 		if err != nil {
 			return nil, err
 		}
-		/*if instance.initCSV() != nil {
-			fmt.Printf("Error initCSV")
-		}*/
+	}
+	return instance, nil
+}
+
+// не создает CSV файл (для импорта)
+func GetCSVInstance() (*CSVFile, error) {
+	if instance == nil {
+		var err error
+		_, err = os.Stat("./data/codes.csv")
+		if os.IsNotExist(err) { //если codes.csv существует
+			return nil, nil
+		}
+		instance, err = сreateCSV()
+		if err != nil {
+			return nil, err
+		}
 	}
 	return instance, nil
 }
@@ -37,7 +53,7 @@ func CloseCSV() {
 }
 
 func сreateCSV() (*CSVFile, error) {
-	err := db.CheckDirectory("data")
+	err := db.CreateDirectory("data")
 	if err != nil {
 		return nil, err
 	}
@@ -83,16 +99,22 @@ func (cf *CSVFile) ImportCodes() error {
 	if err != nil {
 		return err
 	}
-	dbInstance.Init()
+	countRecords := len(records) - 1
 	for i := 1; i < len(records); i++ {
-		err = dbInstance.AddCodeRecord(&typesDB.Codes{
+		added, err := dbInstance.AddCodeRecord(&typesDB.Codes{
 			MoySklad:     records[i][0],
 			Manufacturer: records[i][1],
 			Merlion:      records[i][2],
 		})
 		if err != nil {
-			return err
+			log.Printf("Ошибка при импорте CSV (строка %d): %s\n", i+1, err)
 		}
+		if !added {
+			countRecords--
+		} /*else {
+			fmt.Printf("Не добавлена запись: %s\n", records[i][1])
+		}*/
 	}
+	fmt.Printf("Добавлено %d записей при импорте CSV\n", countRecords)
 	return nil
 }

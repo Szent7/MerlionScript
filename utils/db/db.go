@@ -4,7 +4,6 @@ import (
 	"MerlionScript/utils/db/typesDB"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -16,7 +15,7 @@ type DBInstance struct {
 
 var instance *DBInstance
 
-func CheckDirectory(path string) error {
+func CreateDirectory(path string) error {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		err = os.Mkdir(path, 0660)
@@ -29,7 +28,7 @@ func CheckDirectory(path string) error {
 }
 
 func createDBConnection() (*sql.DB, error) {
-	err := CheckDirectory("data")
+	err := CreateDirectory("data")
 	if err != nil {
 		return nil, err
 	}
@@ -64,30 +63,40 @@ func CloseDB() {
 	}
 }
 
-func (instance *DBInstance) Init() {
+func (instance *DBInstance) Init() error {
 	createTableSQL := `CREATE TABLE IF NOT EXISTS codes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+		ms_own_id INTEGER,
 		moy_sklad TEXT NOT NULL,
-		manufacturer TEXT NOT NULL,
+		manufacturer TEXT NOT NULL UNIQUE,
         merlion TEXT NOT NULL
     );`
 
 	_, err := instance.db.Exec(createTableSQL)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+
+	return nil
 }
 
-func (instance *DBInstance) AddCodeRecord(record *typesDB.Codes) error {
-	insertCodeRecordSQL := `INSERT INTO codes (moy_sklad, manufacturer, merlion) VALUES (?, ?, ?)`
+func (instance *DBInstance) AddCodeRecord(record *typesDB.Codes) (bool, error) {
+	insertCodeRecordSQL := `INSERT INTO codes (ms_own_id, moy_sklad, manufacturer, merlion) VALUES (?, ?, ?, ?) ON CONFLICT(manufacturer) DO NOTHING`
 	statement, err := instance.db.Prepare(insertCodeRecordSQL)
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(record.MoySklad, record.Manufacturer, record.Merlion)
-	return err
+	res, err := statement.Exec(record.MsOwnId, record.MoySklad, record.Manufacturer, record.Merlion)
+	if err != nil {
+		return false, err
+	}
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (instance *DBInstance) DeleteCodeRecord(id int) error {
@@ -97,14 +106,14 @@ func (instance *DBInstance) DeleteCodeRecord(id int) error {
 }
 
 func (instance *DBInstance) EditCodeRecord(record *typesDB.Codes) error {
-	editCodeRecordSQL := `UPDATE codes SET moy_sklad = ?, manufacturer = ?, merlion = ? WHERE id = ?`
+	editCodeRecordSQL := `UPDATE codes SET ms_own_id = ?, moy_sklad = ?, manufacturer = ?, merlion = ? WHERE id = ?`
 	statement, err := instance.db.Prepare(editCodeRecordSQL)
 	if err != nil {
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(record.MoySklad, record.Manufacturer, record.Merlion, record.Id)
+	_, err = statement.Exec(record.MsOwnId, record.MoySklad, record.Manufacturer, record.Merlion, record.Id)
 	return err
 }
 
@@ -135,8 +144,89 @@ func (instance *DBInstance) GetCodeRecords() (*[]typesDB.Codes, error) {
 
 	for rows.Next() {
 		var record typesDB.Codes
-		rows.Scan(&record.Id, &record.MoySklad, &record.Manufacturer, &record.Merlion)
+		var MsOwnId sql.NullInt64
+		rows.Scan(&record.Id, &MsOwnId, &record.MoySklad, &record.Manufacturer, &record.Merlion)
+		if MsOwnId.Valid {
+			record.MsOwnId = MsOwnId.Int64
+		}
 		records = append(records, record)
 	}
 	return &records, nil
+}
+
+func (instance *DBInstance) GetCodeRecordsNoMS() (*[]typesDB.Codes, error) {
+	var records []typesDB.Codes
+	rows, err := instance.db.Query("SELECT * FROM codes WHERE moy_sklad = ''")
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var record typesDB.Codes
+		var MsOwnId sql.NullInt64
+		rows.Scan(&record.Id, &MsOwnId, &record.MoySklad, &record.Manufacturer, &record.Merlion)
+		if MsOwnId.Valid {
+			record.MsOwnId = MsOwnId.Int64
+		}
+		records = append(records, record)
+	}
+	return &records, nil
+}
+
+func (instance *DBInstance) GetCodeRecordsFilledMS() (*[]typesDB.Codes, error) {
+	var records []typesDB.Codes
+	rows, err := instance.db.Query("SELECT * FROM codes WHERE moy_sklad != '' AND manufacturer != '' AND merlion != ''")
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var record typesDB.Codes
+		var MsOwnId sql.NullInt64
+		rows.Scan(&record.Id, &MsOwnId, &record.MoySklad, &record.Manufacturer, &record.Merlion)
+		if MsOwnId.Valid {
+			record.MsOwnId = MsOwnId.Int64
+		}
+		records = append(records, record)
+	}
+	return &records, nil
+}
+
+func (instance *DBInstance) CheckIfExistRecord(manufacturer string) (bool, error) {
+	existsSQL := `SELECT 1 FROM codes WHERE manufacturer = ?`
+	var exists int = 0
+	err := instance.db.QueryRow(existsSQL, manufacturer).Scan(&exists)
+	if err != nil && err != sql.ErrNoRows {
+		return false, err
+	}
+
+	if exists == 1 {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
+func (instance *DBInstance) GetLastOwnIdMS() (int64, error) {
+	var maxValue sql.NullInt64
+
+	err := instance.db.QueryRow("SELECT MAX(ms_own_id) FROM codes").Scan(&maxValue)
+	if err != nil {
+		return -1, err
+	}
+
+	// Если maxValue не имеет значения, устанавливаем его равным 1
+	if !maxValue.Valid {
+		maxValue.Int64 = 1
+	}
+
+	return maxValue.Int64, nil
 }

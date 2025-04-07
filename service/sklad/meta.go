@@ -1,16 +1,16 @@
-package merlion
+package sklad
 
 import (
 	"MerlionScript/types/restTypes"
 	"MerlionScript/utils/rest"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
-func GetOrganizationMeta(SkladCredentials string, OrganizationName string) (restTypes.Meta, error) {
-	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
-	response, err := rest.CreateRequest("GET", restTypes.OrganizationUrl+"?search="+OrganizationName, authHeader, nil)
+func GetOrganizationMeta(OrganizationName string) (restTypes.Meta, error) {
+	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
+	response, err := rest.CreateRequest("GET", restTypes.OrganizationUrl+"?search="+OrganizationName, nil)
 	if err != nil || response.StatusCode != 200 {
 		return restTypes.Meta{}, err
 	}
@@ -28,9 +28,9 @@ func GetOrganizationMeta(SkladCredentials string, OrganizationName string) (rest
 	return restTypes.Meta{}, nil
 }
 
-func GetStoreMeta(SkladCredentials string, StoreName string) (restTypes.Meta, error) {
-	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
-	response, err := rest.CreateRequest("GET", restTypes.StoreUrl, authHeader, nil)
+func GetStoreMeta(StoreName string) (restTypes.Meta, error) {
+	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
+	response, err := rest.CreateRequest("GET", restTypes.StoreUrl, nil)
 	if err != nil || response.StatusCode != 200 {
 		return restTypes.Meta{}, err
 	}
@@ -48,19 +48,22 @@ func GetStoreMeta(SkladCredentials string, StoreName string) (restTypes.Meta, er
 	return restTypes.Meta{}, nil
 }
 
-func GetItemMeta(SkladCredentials string, article string) (restTypes.Meta, error) {
-	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
-	response, err := rest.CreateRequest("GET", restTypes.ItemUrl+"?search="+article, authHeader, nil)
+func GetItemMeta(article string) (restTypes.Meta, error) {
+	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
+	response, err := rest.CreateRequest("GET", restTypes.ItemUrl+"?search="+article, nil)
 	if err != nil || response.StatusCode != 200 {
 		return restTypes.Meta{}, err
 	}
 
-	items := restTypes.SearchStoreOrganization{}
+	items := restTypes.SearchItem{}
 	if err := json.Unmarshal(response.Body, &items); err != nil {
 		return restTypes.Meta{}, fmt.Errorf("ошибка при декодировании item (getstoremeta): %s", err.Error())
 	}
-	if len(items.Rows) != 0 {
-		return items.Rows[0].StoreMeta, nil
+	for i := range items.Rows {
+		if strings.Contains(items.Rows[i].Article, article) {
+			return items.Rows[i].Meta, nil
+		}
 	}
+
 	return restTypes.Meta{}, nil
 }

@@ -12,6 +12,8 @@ const (
 	StoreUrl        = "https://api.moysklad.ru/api/remap/1.2/entity/store"
 	OrganizationUrl = "https://api.moysklad.ru/api/remap/1.2/entity/organization"
 	AcceptanceUrl   = "https://api.moysklad.ru/api/remap/1.2/entity/supply"
+	WoffUrl         = "https://api.moysklad.ru/api/remap/1.2/entity/loss"
+	StocksUrl       = "https://api.moysklad.ru/api/remap/1.2/report/stock/bystore/current"
 )
 
 type Response struct {
@@ -61,8 +63,9 @@ type ProductGroup struct {
 }
 
 type CreateItem struct {
-	Name    string `json:"name"`
-	Article string `json:"article"`
+	ProductFolder MetaMiddle `json:"productFolder,omitempty"`
+	Name          string     `json:"name"`
+	Article       string     `json:"article"`
 }
 
 type UploadImage struct {
