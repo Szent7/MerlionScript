@@ -1,6 +1,7 @@
 package merlion
 
 import (
+	"MerlionScript/keeper"
 	"MerlionScript/types/soapTypes"
 	"MerlionScript/utils/soap"
 	"encoding/xml"
@@ -15,7 +16,7 @@ func GetItemsImagesByItemId(itemId string) []soapTypes.ItemImage {
 		//Page:   "1",
 	}
 	//var res = make([]types.ItemMenu, 100)
-	decoder, err := soap.SoapCallHandleResponse("https://apitest.merlion.com/rl/mlservice3", soapTypes.GetItemsImagesUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetItemsImagesUrl, req)
 	if err != nil {
 		log.Fatalf("SoapCallHandleResponse error: %s", err)
 	}

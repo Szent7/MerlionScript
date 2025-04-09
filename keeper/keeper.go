@@ -3,16 +3,19 @@ package keeper
 import "encoding/base64"
 
 var K ShareData
+var MerlionMainURL = "https://api.merlion.com/rl/mlservice3"
 
 type ShareData struct {
 	skladCredentials   string
+	skladToken         string
 	merlionCredentials string
 	skladName          string
 	orgName            string
 }
 
-func (sd *ShareData) SetData(SkladCredentials string, MerlionCredentials string, SkladName string, OrgName string) {
-	sd.skladCredentials = base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
+func (sd *ShareData) SetData(SkladToken string, MerlionCredentials string, SkladName string, OrgName string) {
+	//sd.skladCredentials = base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
+	sd.skladToken = SkladToken
 	sd.merlionCredentials = base64.StdEncoding.EncodeToString([]byte(MerlionCredentials))
 	sd.skladName = SkladName
 	sd.orgName = OrgName
@@ -23,7 +26,7 @@ func (sd *ShareData) GetCredentials() (string, string) {
 }
 
 func (sd *ShareData) GetMSCredentials() string {
-	return sd.skladCredentials
+	return sd.skladToken
 }
 
 func (sd *ShareData) GetMerlionCredentials() string {

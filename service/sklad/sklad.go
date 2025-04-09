@@ -56,29 +56,31 @@ func GetItemByManufacturer(manufacturer string) (restTypes.Response, error) {
 	return *body, nil
 }
 
-func GetItemUUID(codeMS string) (string, error) {
+func GetItemUUID(codeMS string) (string, bool, error) {
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
 	response, err := rest.CreateRequest("GET", restTypes.ItemUrl+"?search="+codeMS, nil)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	if response.StatusCode != 200 {
-		return "", err
+		fmt.Println(response.StatusCode)
+		fmt.Println(string(response.Body))
+		return "", false, err
 	}
 	items := restTypes.SearchItem{}
 	if err := json.Unmarshal(response.Body, &items); err != nil {
-		return "", fmt.Errorf("ошибка при декодировании item (getItemUUID): %s", err.Error())
+		return "", false, fmt.Errorf("ошибка при декодировании item (getItemUUID): %s", err.Error())
 	}
 
 	if len(items.Rows) != 0 {
-		return items.Rows[0].Id, nil
+		return items.Rows[0].Id, items.Rows[0].IsSerialTrackable, nil
 	}
 	/*for i := range items.Rows {
 		if strings.Contains(items.Rows[i].Name, codeMS) {
 			return items.Rows[i].Id, nil
 		}
 	}*/
-	return "", nil
+	return "", false, nil
 }
 
 func GetStoreUUID(storeName string) (string, error) {
@@ -88,6 +90,8 @@ func GetStoreUUID(storeName string) (string, error) {
 		return "", err
 	}
 	if response.StatusCode != 200 {
+		fmt.Println(response.StatusCode)
+		fmt.Println(string(response.Body))
 		return "", err
 	}
 	items := restTypes.SearchItem{}
@@ -139,6 +143,8 @@ func IncreaseItemsAvail(request *restTypes.Acceptance) error {
 		return err
 	}
 	if response.StatusCode != 200 {
+		fmt.Println(response.StatusCode)
+		fmt.Println(string(response.Body))
 		return err
 	}
 	return nil
@@ -157,6 +163,8 @@ func DecreaseItemsAvail(request *restTypes.Acceptance) error {
 		return err
 	}
 	if response.StatusCode != 200 {
+		fmt.Println(response.StatusCode)
+		fmt.Println(string(response.Body))
 		return err
 	}
 	return nil

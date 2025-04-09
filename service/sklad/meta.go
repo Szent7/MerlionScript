@@ -10,7 +10,8 @@ import (
 
 func GetOrganizationMeta(OrganizationName string) (restTypes.Meta, error) {
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
-	response, err := rest.CreateRequest("GET", restTypes.OrganizationUrl+"?search="+OrganizationName, nil)
+	//response, err := rest.CreateRequest("GET", restTypes.OrganizationUrl+"?search="+OrganizationName, nil)
+	response, err := rest.CreateRequest("GET", restTypes.OrganizationUrl, nil)
 	if err != nil || response.StatusCode != 200 {
 		return restTypes.Meta{}, err
 	}

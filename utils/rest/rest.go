@@ -19,7 +19,7 @@ func CreateRequest(reqType string, url string, bodyRequest io.Reader) (*restType
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Accept-Encoding", "gzip")
 	//if authHeader != "" {
-	req.Header.Add("Authorization", "Basic "+keeper.K.GetMSCredentials())
+	req.Header.Add("Authorization", "Bearer "+keeper.K.GetMSCredentials())
 	//}
 
 	client := &http.Client{}

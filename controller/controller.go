@@ -29,9 +29,9 @@ func GetTimeNow() string {
 
 func StartController(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	//checkMerlionNewPositions(ctx)
+	checkMerlionNewPositions(ctx)
 	createNewPositionsMS(ctx)
-	//updateRemainsMS(ctx)
+	updateRemainsMS(ctx)
 
 	for {
 		select {
@@ -39,9 +39,9 @@ func StartController(ctx context.Context, wg *sync.WaitGroup) {
 			fmt.Println("Контроллер завершает работу из-за отмены контекста")
 			return
 		case <-time.After(time.Hour * 1):
-			//checkMerlionNewPositions(ctx)
+			checkMerlionNewPositions(ctx)
 			createNewPositionsMS(ctx)
-			//updateRemainsMS(ctx)
+			updateRemainsMS(ctx)
 		}
 	}
 }
@@ -199,6 +199,7 @@ func createNewPositionsMS(ctx context.Context) error {
 						log.Printf("Ошибка при парсинге -S0 номера из Мерлиона (createNewPositionsMS_2) merlionCode = %s: %s\n", item.Merlion, err)
 						continue
 					}
+					//TODO позиция с 3 артикулами, добавить проверку на уникальность кода мс
 					for i := range msItems.Rows {
 						// Если полностью совпадает
 						if sklad.СontainsSubstring(msItems.Rows[i].Name, item.Manufacturer) {
@@ -266,6 +267,15 @@ func createNewPositionsMS(ctx context.Context) error {
 						}
 						continue
 					}
+					_, exists, err := dbInstance.GetCodeRecordByMS(article)
+					if err != nil {
+						log.Printf("Ошибка при получении записи из БД (createNewPositionsMS_2): %s\n", err)
+						continue
+					}
+					if exists {
+						log.Printf("Вероятное задвоение manufacturer = %s | соответствие на мс = %s\n", item.Manufacturer, article)
+						continue
+					}
 					/*if article == "" {
 						log.Printf("Соответствий не найдено или поле артикулов пустое manufacturer = %s: ", item.Manufacturer)
 						continue
@@ -316,13 +326,14 @@ func updateRemainsMS(ctx context.Context) error {
 			log.Printf("Ошибка при получении записей из БД (createNewPositionsMS): %s\n", err)
 			return err
 		}
+		//orgName := strings.Replace(keeper.K.GetOrgName(), " ", "+", -1)
 		orgMeta, err := sklad.GetOrganizationMeta(keeper.K.GetOrgName())
 		if err != nil {
 			log.Printf("Ошибка при получении метаданных организации (updateRemainsMS): %s\n", err)
 			return err
 		}
 		storeMeta, err := sklad.GetStoreMeta(keeper.K.GetSkladName())
-		if err != nil {
+		if err != nil || storeMeta.Href == "" {
 			log.Printf("Ошибка при получении метаданных склада (updateRemainsMS): %s\n", err)
 			return err
 		}
@@ -354,9 +365,13 @@ func updateRemainsMS(ctx context.Context) error {
 			case <-ctx.Done():
 				return nil
 			default:
-				itemUUID, err := sklad.GetItemUUID(item.MoySklad)
+				itemUUID, isSerialTrackable, err := sklad.GetItemUUID(item.MoySklad)
 				if err != nil || itemUUID == "" {
 					log.Printf("Ошибка при получении UUID товара (updateRemainsMS) msCode = %s: %s\n", item.MoySklad, err)
+					continue
+				}
+				if isSerialTrackable {
+					log.Printf("Товар с серийным учетом в приемку/списание не попал (updateRemainsMS) msCode = %s isSerialTrackable = %t\n", item.MoySklad, isSerialTrackable)
 					continue
 				}
 				itemRemainsMerlion, err := merlion.GetItemsAvailByItemId(item.Merlion)
@@ -494,11 +509,11 @@ func createNewItemMS(item *typesDB.Codes, copyItem *typesDB.Codes, counter *int6
 		Article: newId,
 		ProductFolder: restTypes.MetaMiddle{
 			Meta: restTypes.Meta{
-				Href:         "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/b45460e2-10b0-11f0-0a80-06fc00002dbb",
+				Href:         "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/db27556f-153a-11f0-0a80-1751000ec1e4",
 				MetadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
 				Type:         "productfolder",
 				MediaType:    "application/json",
-				UuidHref:     "https://online.moysklad.ru/app/#good/edit?id=b45460e2-10b0-11f0-0a80-06fc00002dbb",
+				UuidHref:     "https://online.moysklad.ru/app/#good/edit?id=db27556f-153a-11f0-0a80-1751000ec1e4",
 			},
 		},
 	}

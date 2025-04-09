@@ -34,6 +34,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 
+	fmt.Println("Боже, Царя храни!")
 	wg.Add(1)
 	go controller.StartController(ctx, &wg)
 
@@ -57,15 +58,16 @@ func importENV() {
 		log.Fatalf("Ошибка при парсинге .env файла: %s", err)
 	}
 
-	SkladCredentials := os.Getenv("MOY_SKLAD_CREDENTIALS")
+	//SkladCredentials := os.Getenv("MOY_SKLAD_CREDENTIALS")
+	SkladToken := os.Getenv("MOY_SKLAD_TOKEN")
 	MerlionCredentials := os.Getenv("MERLION_CREDENTIALS")
 	SkladName := os.Getenv("SKLAD")
 	OrgName := os.Getenv("ORGANIZATION")
 
-	if SkladCredentials == "" || MerlionCredentials == "" || SkladName == "" || OrgName == "" {
+	if SkladToken == "" || MerlionCredentials == "" || SkladName == "" || OrgName == "" {
 		log.Fatalf("Данные для входа не обнаружены")
 	}
-	keeper.K.SetData(SkladCredentials, MerlionCredentials, SkladName, OrgName)
+	keeper.K.SetData(SkladToken, MerlionCredentials, SkladName, OrgName)
 }
 
 func importCSV() {

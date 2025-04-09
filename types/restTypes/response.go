@@ -5,11 +5,12 @@ type SearchItem struct {
 }
 
 type Rows struct {
-	Id      string `json:"id"`
-	Name    string `json:"name"`
-	Group   Group  `json:"group"`
-	Article string `json:"article"`
-	Meta    Meta   `json:"meta"`
+	Id                string `json:"id"`
+	Name              string `json:"name"`
+	Group             Group  `json:"group"`
+	Article           string `json:"article"`
+	IsSerialTrackable bool   `json:"isSerialTrackable"`
+	Meta              Meta   `json:"meta"`
 }
 
 type Group struct {

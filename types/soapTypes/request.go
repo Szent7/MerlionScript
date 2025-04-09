@@ -3,10 +3,10 @@ package soapTypes
 import "encoding/xml"
 
 const (
-	GetCatalogUrl     = "https://apitest.merlion.com/rl/mlservice3#getCatalog"
-	GetItemsUrl       = "https://apitest.merlion.com/rl/mlservice3#getItems"
-	GetItemsImagesUrl = "https://apitest.merlion.com/rl/mlservice3#getItemsImages"
-	GetItemsAvailUrl  = "https://apitest.merlion.com/rl/mlservice3#getItemsAvail"
+	GetCatalogUrl     = "https://api.merlion.com/rl/mlservice3#getCatalog"
+	GetItemsUrl       = "https://api.merlion.com/rl/mlservice3#getItems"
+	GetItemsImagesUrl = "https://api.merlion.com/rl/mlservice3#getItemsImages"
+	GetItemsAvailUrl  = "https://api.merlion.com/rl/mlservice3#getItemsAvail"
 
 	DownloadImageUrl = "http://img.merlion.ru/items"
 )

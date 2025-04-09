@@ -131,6 +131,20 @@ func (instance *DBInstance) GetCodeRecordByManufacturer(manufacturer string) (ty
 	return record, true, nil
 }
 
+func (instance *DBInstance) GetCodeRecordByMS(msCode string) (typesDB.Codes, bool, error) {
+	GetCodeRecordSQL := `SELECT id, manufacturer, merlion FROM codes WHERE moy_sklad = ?`
+
+	record := typesDB.Codes{MoySklad: msCode}
+	err := instance.db.QueryRow(GetCodeRecordSQL, msCode).Scan(&record.Id, &record.Manufacturer, &record.Merlion)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return typesDB.Codes{}, false, nil
+		}
+		return typesDB.Codes{}, false, err
+	}
+	return record, true, nil
+}
+
 func (instance *DBInstance) GetCodeRecords() (*[]typesDB.Codes, error) {
 	var records []typesDB.Codes
 	rows, err := instance.db.Query("SELECT * FROM codes")

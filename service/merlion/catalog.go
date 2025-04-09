@@ -1,6 +1,7 @@
 package merlion
 
 import (
+	"MerlionScript/keeper"
 	"MerlionScript/types/soapTypes"
 	"MerlionScript/utils/soap"
 	"encoding/xml"
@@ -14,7 +15,7 @@ func GetCatalog(catName string) (soapTypes.ItemMenu, bool) {
 		Cat_id: "All",
 	}
 	//var res = make([]soapTypes.ItemMenu, 100)
-	decoder, err := soap.SoapCallHandleResponse("https://apitest.merlion.com/rl/mlservice3", soapTypes.GetCatalogUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetCatalogUrl, req)
 	if err != nil {
 		log.Fatalf("SoapCallHandleResponse error: %s", err)
 	}
@@ -48,7 +49,7 @@ func GetAllCatalogCodes() ([]string, error) {
 	req := soapTypes.ItemMenuReq{
 		Cat_id: "Order",
 	}
-	decoder, err := soap.SoapCallHandleResponse("https://apitest.merlion.com/rl/mlservice3", soapTypes.GetCatalogUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetCatalogUrl, req)
 	if err != nil {
 		log.Printf("Ошибка при SOAP-запросе (GetAllCatalogCodes): %s\n", err)
 		return nil, err
@@ -82,7 +83,7 @@ func GetCatalogUniqueCodes() []string {
 		Cat_id: "All",
 	}
 
-	decoder, err := soap.SoapCallHandleResponse("https://apitest.merlion.com/rl/mlservice3", soapTypes.GetCatalogUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetCatalogUrl, req)
 	if err != nil {
 		log.Fatalf("SoapCallHandleResponse error: %s", err)
 	}

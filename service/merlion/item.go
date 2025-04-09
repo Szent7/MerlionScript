@@ -1,11 +1,13 @@
 package merlion
 
 import (
+	"MerlionScript/keeper"
 	"MerlionScript/types/soapTypes"
 	"MerlionScript/utils/soap"
 	"encoding/xml"
 	"fmt"
 	"log"
+	"time"
 )
 
 func GetItemsByCatId(catId string) ([]soapTypes.ItemCatalog, error) {
@@ -15,7 +17,7 @@ func GetItemsByCatId(catId string) ([]soapTypes.ItemCatalog, error) {
 		//Page:   "1",
 	}
 	//var res = make([]types.ItemMenu, 100)
-	decoder, err := soap.SoapCallHandleResponse("https://apitest.merlion.com/rl/mlservice3", soapTypes.GetItemsUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetItemsUrl, req)
 	if err != nil {
 		log.Printf("Ошибка при SOAP-запросе (GetItemsByCatId): %s\n", err)
 		return nil, err
@@ -49,11 +51,13 @@ func GetItemsByCatId(catId string) ([]soapTypes.ItemCatalog, error) {
 func GetItemsAvailByItemId(itemId string) ([]soapTypes.ItemAvail, error) {
 	//fmt.Println(base64.StdEncoding.EncodeToString([]byte(credentials)))
 	req := soapTypes.ItemAvailReq{
-		Item_id: []soapTypes.ItemId{{Item: itemId}},
+		Item_id:         []soapTypes.ItemId{{Item: itemId}},
+		Shipment_method: "ДОСТАВКА",
+		Shipment_date:   GetNextDate(),
 		//Page:   "1",
 	}
 	//var res = make([]types.ItemMenu, 100)
-	decoder, err := soap.SoapCallHandleResponse("https://apitest.merlion.com/rl/mlservice3", soapTypes.GetItemsAvailUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetItemsAvailUrl, req)
 	if err != nil {
 		log.Printf("Ошибка при SOAP-запросе (GetItemsAvailByItemId): %s\n", err)
 		return nil, err
@@ -91,7 +95,7 @@ func GetItemsByItemId(itemId string) ([]soapTypes.ItemCatalog, error) {
 		//Page:   "1",
 	}
 	//var res = make([]types.ItemMenu, 100)
-	decoder, err := soap.SoapCallHandleResponse("https://apitest.merlion.com/rl/mlservice3", soapTypes.GetItemsUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetItemsUrl, req)
 	if err != nil {
 		log.Printf("Ошибка при SOAP-запросе (GetItemsByItemId): %s\n", err)
 		return nil, err
@@ -120,4 +124,10 @@ func GetItemsByItemId(itemId string) ([]soapTypes.ItemCatalog, error) {
 		}
 	}
 	return items, nil
+}
+
+func GetNextDate() string {
+	now := time.Now()
+	tomorrow := now.AddDate(0, 0, 1)
+	return tomorrow.Format("2006-01-02")
 }
