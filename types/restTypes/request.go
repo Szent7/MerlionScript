@@ -86,4 +86,5 @@ type PositionsAdd struct {
 	//Id       string `json:"id"`
 	Quantity   int        `json:"quantity"`
 	Assortment MetaMiddle `json:"assortment"`
+	Price      float32    `json:"price,omitempty"`
 }

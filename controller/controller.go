@@ -398,6 +398,7 @@ func updateRemainsMS(ctx context.Context) error {
 					acceptanceList = append(acceptanceList, restTypes.PositionsAdd{
 						Quantity:   itemRemainsMerlion[0].AvailableClient_MSK - itemRemainsMS,
 						Assortment: restTypes.MetaMiddle{Meta: itemMeta},
+						Price:      itemRemainsMerlion[0].PriceClientRUB_MSK * 100,
 					})
 				}
 			}
