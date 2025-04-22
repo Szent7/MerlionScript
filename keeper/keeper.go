@@ -11,14 +11,16 @@ type ShareData struct {
 	merlionCredentials string
 	skladName          string
 	orgName            string
+	catSkladName       string
 }
 
-func (sd *ShareData) SetData(SkladToken string, MerlionCredentials string, SkladName string, OrgName string) {
+func (sd *ShareData) SetData(SkladToken string, MerlionCredentials string, SkladName string, OrgName string, catSkladName string) {
 	//sd.skladCredentials = base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
 	sd.skladToken = SkladToken
 	sd.merlionCredentials = base64.StdEncoding.EncodeToString([]byte(MerlionCredentials))
 	sd.skladName = SkladName
 	sd.orgName = OrgName
+	sd.catSkladName = catSkladName
 }
 
 func (sd *ShareData) GetCredentials() (string, string) {
@@ -39,4 +41,8 @@ func (sd *ShareData) GetSkladName() string {
 
 func (sd *ShareData) GetOrgName() string {
 	return sd.orgName
+}
+
+func (sd *ShareData) GetSkladCat() string {
+	return sd.catSkladName
 }

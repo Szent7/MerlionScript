@@ -49,6 +49,26 @@ func GetStoreMeta(StoreName string) (restTypes.Meta, error) {
 	return restTypes.Meta{}, nil
 }
 
+func GetCatMeta(CatName string) (restTypes.Meta, error) {
+	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
+	response, err := rest.CreateRequest("GET", restTypes.GroupUrl, nil)
+	if err != nil || response.StatusCode != 200 {
+		return restTypes.Meta{}, err
+	}
+
+	items := restTypes.SearchStoreOrganization{}
+	if err := json.Unmarshal(response.Body, &items); err != nil {
+		return restTypes.Meta{}, fmt.Errorf("ошибка при декодировании item (getcatmeta): %s", err.Error())
+	}
+
+	for _, item := range items.Rows {
+		if item.Name == CatName {
+			return item.StoreMeta, nil
+		}
+	}
+	return restTypes.Meta{}, nil
+}
+
 func GetItemMeta(article string) (restTypes.Meta, error) {
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
 	response, err := rest.CreateRequest("GET", restTypes.ItemUrl+"?search="+article, nil)

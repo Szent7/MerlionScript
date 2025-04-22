@@ -63,11 +63,12 @@ func importENV() {
 	MerlionCredentials := os.Getenv("MERLION_CREDENTIALS")
 	SkladName := os.Getenv("SKLAD")
 	OrgName := os.Getenv("ORGANIZATION")
+	CatName := os.Getenv("CATALOG")
 
 	if SkladToken == "" || MerlionCredentials == "" || SkladName == "" || OrgName == "" {
 		log.Fatalf("Данные для входа не обнаружены")
 	}
-	keeper.K.SetData(SkladToken, MerlionCredentials, SkladName, OrgName)
+	keeper.K.SetData(SkladToken, MerlionCredentials, SkladName, OrgName, CatName)
 }
 
 func importCSV() {
