@@ -81,6 +81,13 @@ func (instance *DBInstance) Init() error {
 }
 
 func (instance *DBInstance) AddCodeRecord(record *typesDB.Codes) (bool, error) {
+	exists, err := instance.checkRecordExists(record.Manufacturer)
+	if err != nil {
+		return false, err
+	}
+	if exists {
+		return false, nil
+	}
 	insertCodeRecordSQL := `INSERT INTO codes (ms_own_id, moy_sklad, manufacturer, merlion) VALUES (?, ?, ?, ?) ON CONFLICT(manufacturer) DO NOTHING`
 	statement, err := instance.db.Prepare(insertCodeRecordSQL)
 	if err != nil {
@@ -97,6 +104,16 @@ func (instance *DBInstance) AddCodeRecord(record *typesDB.Codes) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func (instance *DBInstance) checkRecordExists(manufacturer string) (bool, error) {
+	var exists bool
+	query := "SELECT EXISTS(SELECT 1 FROM codes WHERE manufacturer = ?)"
+	err := instance.db.QueryRow(query, manufacturer).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
 func (instance *DBInstance) DeleteCodeRecord(id int) error {
