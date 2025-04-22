@@ -38,7 +38,7 @@ func StartController(ctx context.Context, wg *sync.WaitGroup) {
 		case <-ctx.Done():
 			fmt.Println("Контроллер завершает работу из-за отмены контекста")
 			return
-		case <-time.After(time.Hour * 1):
+		case <-time.After(time.Minute * 1):
 			checkMerlionNewPositions(ctx)
 			createNewPositionsMS(ctx)
 			updateRemainsMS(ctx)
@@ -182,21 +182,32 @@ func createNewPositionsMS(ctx context.Context) error {
 					var sProblem bool = false
 					var merlionSnum int = -10
 					var msSnum int = -11
+					var bProblem bool = false
+					var merlionBnum int = -10
+					var msBnum int = -11
 					itemMerlion, err := merlion.GetItemsByItemId(item.Merlion)
 					if err != nil || len(itemMerlion) == 0 || itemMerlion[0].No == "" {
 						log.Printf("Ошибка при получении записи из Мерлиона (createNewPositionsMS_2) merlionCode = %s: %s\n", item.Merlion, err)
 						continue
 					}
-					// Вытягиваем -S0 номер из мерлиона, если есть
+					// Вытягиваем -S0/-0000B номер из мерлиона, если есть
 					substringsMer := strings.Fields(itemMerlion[0].Name)
 					for _, subS := range substringsMer {
 						merlionSnum = extractNumberFromS(subS)
 						if merlionSnum >= 0 {
 							break
 						}
+						merlionBnum = extractNumberFromB(subS)
+						if merlionBnum >= 0 {
+							break
+						}
 					}
 					if merlionSnum == -1 {
 						log.Printf("Ошибка при парсинге -S0 номера из Мерлиона (createNewPositionsMS_2) merlionCode = %s: %s\n", item.Merlion, err)
+						continue
+					}
+					if merlionBnum == -1 {
+						log.Printf("Ошибка при парсинге -0000B номера из Мерлиона (createNewPositionsMS_2) merlionCode = %s: %s\n", item.Merlion, err)
 						continue
 					}
 					//TODO позиция с 3 артикулами, добавить проверку на уникальность кода мс
@@ -244,9 +255,38 @@ func createNewPositionsMS(ctx context.Context) error {
 								break
 							}
 						}
+
+						// Если заканчивается на -0000B
+						if checkBManufacturer(msItems.Rows[i].Name, item.Manufacturer) && merlionBnum >= 0 {
+							// Вытягиваем -0000B номер из мс, если есть
+							substringsMS := strings.Fields(msItems.Rows[i].Name)
+							for _, subS := range substringsMS {
+								msBnum = extractNumberFromB(subS)
+								if msBnum >= 0 {
+									break
+								}
+							}
+							// Если номера совпали
+							if msBnum == merlionBnum {
+								bProblem = true
+								founded = true
+								// Но при этом артикул пустой
+								if msItems.Rows[i].Article == "" {
+									emptyArticleProblem = true
+									break
+								}
+								// Не пустой
+								article = msItems.Rows[i].Article
+								break
+							}
+						}
 					}
 					if msSnum == -1 {
 						log.Printf("Ошибка при парсинге -S0 номера из мс manufacturer = %s\n", item.Manufacturer)
+						continue
+					}
+					if msBnum == -1 {
+						log.Printf("Ошибка при парсинге -0000B номера из мс manufacturer = %s\n", item.Manufacturer)
 						continue
 					}
 					if dhiProblem {
@@ -259,6 +299,9 @@ func createNewPositionsMS(ctx context.Context) error {
 					}
 					if sProblem {
 						log.Printf("Проблема окончания -S0 manufacturer = %s | соответствие на мс = %s\n", item.Manufacturer, article)
+					}
+					if bProblem {
+						log.Printf("Проблема окончания -0000B manufacturer = %s | соответствие на мс = %s\n", item.Manufacturer, article)
 					}
 					if !founded {
 						log.Printf("Полных соответствий не найдено manufacturer = %s (создаю новую позицию)", item.Manufacturer)
@@ -403,6 +446,9 @@ func updateRemainsMS(ctx context.Context) error {
 				}
 			}
 			time.Sleep(time.Second / 2)
+			/*if len(woffList) >= 5 {
+				break
+			}*/
 		}
 		if len(acceptanceList) != 0 {
 			acceptanceReq.Positions = acceptanceList
@@ -460,6 +506,38 @@ func checkSManufacturer(s string, substr string) bool {
 // Возвращает -2 если постфикса -S0 нет
 func extractNumberFromS(s string) int {
 	re := regexp.MustCompile(`-S(\d+)`)
+	matches := re.FindStringSubmatch(s)
+
+	if len(matches) > 1 {
+		// Преобразование найденного числа в int
+		number, err := strconv.Atoi(matches[1])
+		if err != nil {
+			return -1
+		}
+		return number
+	}
+
+	return -2
+}
+
+// Проверка на постфикс -0000B
+func checkBManufacturer(s string, substr string) bool {
+	re := regexp.MustCompile(regexp.QuoteMeta(substr) + `-\d{4}B`)
+	matched := re.FindString(s)
+	if matched != "" {
+		return true
+		//fmt.Println("Подстрока найдена:", matched)
+	} else {
+		return false
+		//fmt.Println("Подстрока не найдена.")
+	}
+}
+
+// Извлечение числа из постфикса -0000B
+// Возвращает -1 при ошибке парсинга
+// Возвращает -2 если постфикса -S0 нет
+func extractNumberFromB(s string) int {
+	re := regexp.MustCompile(`-(\d{4})B`)
 	matches := re.FindStringSubmatch(s)
 
 	if len(matches) > 1 {
