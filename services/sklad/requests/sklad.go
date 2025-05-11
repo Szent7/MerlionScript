@@ -1,7 +1,7 @@
-package sklad
+package requests
 
 import (
-	"MerlionScript/types/restTypes"
+	skladTypes "MerlionScript/types/restTypes/sklad"
 	"MerlionScript/utils/rest"
 	"bytes"
 	"encoding/json"
@@ -10,21 +10,21 @@ import (
 	"strings"
 )
 
-func CreateItem(product restTypes.CreateItem) (restTypes.Response, error) {
+func CreateItem(product skladTypes.CreateItem) (rest.Response, error) {
 	//jsonBody, err := json.Marshal(reqBody)
 	jsonBody, err := json.MarshalIndent(product, "", "  ")
 	//fmt.Println("тело запроса в JSON:", string(jsonBody))
 	if err != nil {
 		log.Println("ошибка при преобразовании структуры в JSON:", err)
-		return restTypes.Response{}, err
+		return rest.Response{}, err
 	}
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials))
 	//url := "https://api.moysklad.ru/api/remap/1.2/entity/product"
-	body, err := rest.CreateRequest("POST", restTypes.ItemUrl, bytes.NewBuffer(jsonBody))
+	body, err := rest.CreateRequestMS("POST", skladTypes.ItemUrl, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return restTypes.Response{}, err
+		return rest.Response{}, err
 	}
-	/*var meta restTypes.TestProductMeta
+	/*var meta skladTypes.TestProductMeta
 	fmt.Println("rawBody:", string(body.Body))
 	err = json.Unmarshal(body, &meta)
 	if err != nil {
@@ -33,21 +33,21 @@ func CreateItem(product restTypes.CreateItem) (restTypes.Response, error) {
 	return *body, nil
 }
 
-func GetItemByManufacturer(manufacturer string) (restTypes.Response, error) {
+func GetItemByManufacturer(manufacturer string) (rest.Response, error) {
 	//jsonBody, err := json.Marshal(reqBody)
 	//jsonBody, err := json.MarshalIndent(product, "", "  ")
 	//fmt.Println("тело запроса в JSON:", string(jsonBody))
 	/*if err != nil {
 		log.Println("ошибка при преобразовании структуры в JSON:", err)
-		return restTypes.Response{}, err
+		return skladTypes.Response{}, err
 	}*/
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials))
 	//url := "https://api.moysklad.ru/api/remap/1.2/entity/product"
-	body, err := rest.CreateRequest("GET", restTypes.ItemUrl+"?search="+manufacturer, nil)
+	body, err := rest.CreateRequestMS("GET", skladTypes.ItemUrl+"?search="+manufacturer, nil)
 	if err != nil {
-		return restTypes.Response{}, err
+		return rest.Response{}, err
 	}
-	/*var meta restTypes.TestProductMeta
+	/*var meta skladTypes.TestProductMeta
 	fmt.Println("rawBody:", string(body.Body))
 	err = json.Unmarshal(body, &meta)
 	if err != nil {
@@ -56,36 +56,32 @@ func GetItemByManufacturer(manufacturer string) (restTypes.Response, error) {
 	return *body, nil
 }
 
-func GetItemUUID(codeMS string) (string, bool, error) {
+func GetItem(codeMS string) (skladTypes.Rows, error) {
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
-	response, err := rest.CreateRequest("GET", restTypes.ItemUrl+"?search="+codeMS, nil)
+	response, err := rest.CreateRequestMS("GET", skladTypes.ItemUrl+"?search="+codeMS, nil)
 	if err != nil {
-		return "", false, err
+		return skladTypes.Rows{}, err
 	}
 	if response.StatusCode != 200 {
 		fmt.Println(response.StatusCode)
 		fmt.Println(string(response.Body))
-		return "", false, err
+		return skladTypes.Rows{}, err
 	}
-	items := restTypes.SearchItem{}
+	items := skladTypes.SearchItem{}
 	if err := json.Unmarshal(response.Body, &items); err != nil {
-		return "", false, fmt.Errorf("ошибка при декодировании item (getItemUUID): %s", err.Error())
+		return skladTypes.Rows{}, fmt.Errorf("ошибка при декодировании item (getItem): %s", err.Error())
 	}
 
 	if len(items.Rows) != 0 {
-		return items.Rows[0].Id, items.Rows[0].IsSerialTrackable, nil
+		return items.Rows[0], nil
 	}
-	/*for i := range items.Rows {
-		if strings.Contains(items.Rows[i].Name, codeMS) {
-			return items.Rows[i].Id, nil
-		}
-	}*/
-	return "", false, nil
+
+	return skladTypes.Rows{}, nil
 }
 
 func GetStoreUUID(storeName string) (string, error) {
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
-	response, err := rest.CreateRequest("GET", restTypes.StoreUrl, nil)
+	response, err := rest.CreateRequestMS("GET", skladTypes.StoreUrl, nil)
 	if err != nil {
 		return "", err
 	}
@@ -94,7 +90,7 @@ func GetStoreUUID(storeName string) (string, error) {
 		fmt.Println(string(response.Body))
 		return "", err
 	}
-	items := restTypes.SearchItem{}
+	items := skladTypes.SearchItem{}
 	if err := json.Unmarshal(response.Body, &items); err != nil {
 		return "", fmt.Errorf("ошибка при декодировании item (GetStoreUUID): %s", err.Error())
 	}
@@ -112,14 +108,14 @@ func GetStoreUUID(storeName string) (string, error) {
 
 func GetItemsAvail(itemUUID string, storeUUID string) (int, error) {
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
-	response, err := rest.CreateRequest("GET", restTypes.StocksUrl+"?filter=assortmentId="+itemUUID+";storeId="+storeUUID, nil)
+	response, err := rest.CreateRequestMS("GET", skladTypes.StocksUrl+"?filter=assortmentId="+itemUUID+";storeId="+storeUUID, nil)
 	if err != nil {
 		return -1, err
 	}
 	if response.StatusCode != 200 {
 		return -1, err
 	}
-	items := []restTypes.SearchStock{}
+	items := []skladTypes.SearchStock{}
 	if err := json.Unmarshal(response.Body, &items); err != nil {
 		return -1, fmt.Errorf("ошибка при декодировании item (GetItemsAvail): %s", err.Error())
 	}
@@ -130,7 +126,7 @@ func GetItemsAvail(itemUUID string, storeUUID string) (int, error) {
 	return items[0].Stock, nil
 }
 
-func IncreaseItemsAvail(request *restTypes.Acceptance) error {
+func IncreaseItemsAvail(request *skladTypes.Acceptance) error {
 	jsonBody, err := json.MarshalIndent(request, "", "  ")
 	//fmt.Println("тело запроса в JSON:", string(jsonBody))
 	if err != nil {
@@ -138,7 +134,7 @@ func IncreaseItemsAvail(request *restTypes.Acceptance) error {
 		return err
 	}
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
-	response, err := rest.CreateRequest("POST", restTypes.AcceptanceUrl, bytes.NewBuffer(jsonBody))
+	response, err := rest.CreateRequestMS("POST", skladTypes.AcceptanceUrl, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return err
 	}
@@ -150,7 +146,7 @@ func IncreaseItemsAvail(request *restTypes.Acceptance) error {
 	return nil
 }
 
-func DecreaseItemsAvail(request *restTypes.Acceptance) error {
+func DecreaseItemsAvail(request *skladTypes.Acceptance) error {
 	jsonBody, err := json.MarshalIndent(request, "", "  ")
 	//fmt.Println("тело запроса в JSON:", string(jsonBody))
 	if err != nil {
@@ -158,7 +154,7 @@ func DecreaseItemsAvail(request *restTypes.Acceptance) error {
 		return err
 	}
 	//authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(SkladCredentials))
-	response, err := rest.CreateRequest("POST", restTypes.WoffUrl, bytes.NewBuffer(jsonBody))
+	response, err := rest.CreateRequestMS("POST", skladTypes.WoffUrl, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return err
 	}

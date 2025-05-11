@@ -1,21 +1,21 @@
-package merlion
+package requests
 
 import (
 	"MerlionScript/keeper"
-	"MerlionScript/types/soapTypes"
+	merlionTypes "MerlionScript/types/soapTypes/merlion"
 	"MerlionScript/utils/soap"
 	"encoding/xml"
 	"fmt"
 	"log"
 )
 
-func GetCatalog(catName string) (soapTypes.ItemMenu, bool) {
+func GetCatalog(catName string) (merlionTypes.ItemMenu, bool) {
 	//fmt.Println(base64.StdEncoding.EncodeToString([]byte(credentials)))
-	req := soapTypes.ItemMenuReq{
+	req := merlionTypes.ItemMenuReq{
 		Cat_id: "All",
 	}
-	//var res = make([]soapTypes.ItemMenu, 100)
-	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetCatalogUrl, req)
+	//var res = make([]merlionTypes.ItemMenu, 100)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, merlionTypes.GetCatalogUrl, req)
 	if err != nil {
 		log.Fatalf("SoapCallHandleResponse error: %s", err)
 	}
@@ -24,7 +24,7 @@ func GetCatalog(catName string) (soapTypes.ItemMenu, bool) {
 		if err != nil {
 			break
 		}
-		var item soapTypes.ItemMenu
+		var item merlionTypes.ItemMenu
 		switch start := token.(type) {
 		case xml.StartElement:
 			//fmt.Println("Xml tag:", start.Name.Local)
@@ -42,14 +42,14 @@ func GetCatalog(catName string) (soapTypes.ItemMenu, bool) {
 			}
 		}
 	}
-	return soapTypes.ItemMenu{}, false
+	return merlionTypes.ItemMenu{}, false
 }
 
 func GetAllCatalogCodes() ([]string, error) {
-	req := soapTypes.ItemMenuReq{
+	req := merlionTypes.ItemMenuReq{
 		Cat_id: "Order",
 	}
-	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetCatalogUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, merlionTypes.GetCatalogUrl, req)
 	if err != nil {
 		log.Printf("Ошибка при SOAP-запросе (GetAllCatalogCodes): %s\n", err)
 		return nil, err
@@ -60,7 +60,7 @@ func GetAllCatalogCodes() ([]string, error) {
 		if err != nil {
 			break
 		}
-		var item soapTypes.ItemMenu
+		var item merlionTypes.ItemMenu
 		switch start := token.(type) {
 		case xml.StartElement:
 			//fmt.Println("Xml tag:", start.Name.Local)
@@ -79,11 +79,11 @@ func GetAllCatalogCodes() ([]string, error) {
 
 func GetCatalogUniqueCodes() []string {
 	//fmt.Println(base64.StdEncoding.EncodeToString([]byte(credentials)))
-	req := soapTypes.ItemMenuReq{
+	req := merlionTypes.ItemMenuReq{
 		Cat_id: "All",
 	}
 
-	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetCatalogUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, merlionTypes.GetCatalogUrl, req)
 	if err != nil {
 		log.Fatalf("SoapCallHandleResponse error: %s", err)
 	}
@@ -94,7 +94,7 @@ func GetCatalogUniqueCodes() []string {
 		if err != nil {
 			break
 		}
-		var item soapTypes.ItemMenu
+		var item merlionTypes.ItemMenu
 		switch start := token.(type) {
 		case xml.StartElement:
 			if start.Name.Local == "item" {

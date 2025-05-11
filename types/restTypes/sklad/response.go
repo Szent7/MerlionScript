@@ -1,4 +1,4 @@
-package restTypes
+package sklad
 
 type SearchItem struct {
 	Rows []Rows `json:"rows"`
@@ -31,4 +31,18 @@ type SearchStock struct {
 	AssortmentId string `json:"assortmentId"`
 	StoreId      string `json:"storeId"`
 	Stock        int    `json:"stock"`
+}
+
+type SearchImage struct {
+	Rows []RowsImages `json:"rows"`
+}
+
+type RowsImages struct {
+	ImageMeta Meta   `json:"meta"`
+	Title     string `json:"title"`
+	Filename  string `json:"filename"`
+	Size      int    `json:"size"`
+	Updated   string `json:"updated"`
+	Miniature Meta   `json:"miniature"`
+	Tiny      Meta   `json:"tiny"`
 }

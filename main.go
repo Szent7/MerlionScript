@@ -1,6 +1,7 @@
 package main
 
 import (
+	"MerlionScript/cache"
 	"MerlionScript/controller"
 	"MerlionScript/keeper"
 	csvInstance "MerlionScript/utils/csv"
@@ -17,6 +18,7 @@ import (
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
 	dbInstance, err := db.GetDBInstance()
 	defer db.CloseDB()
 	if err != nil {
@@ -26,12 +28,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("Ошибка при инициализации базы данных: %s", err)
 	}
+	err = cache.InitCache(ctx)
+	if err != nil {
+		log.Fatalf("Ошибка при инициализации кэша: %s", err)
+	}
 	importENV()
 	importCSV()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 
 	fmt.Println("Боже, Царя храни!")
@@ -59,16 +64,26 @@ func importENV() {
 	}
 
 	//SkladCredentials := os.Getenv("MOY_SKLAD_CREDENTIALS")
-	SkladToken := os.Getenv("MOY_SKLAD_TOKEN")
-	MerlionCredentials := os.Getenv("MERLION_CREDENTIALS")
-	SkladName := os.Getenv("SKLAD")
-	OrgName := os.Getenv("ORGANIZATION")
-	CatName := os.Getenv("CATALOG")
+	var data = make(map[string]string, 9)
+	data[keeper.MerlionCredentialsEnv] = os.Getenv(keeper.MerlionCredentialsEnv)
+	data[keeper.MerlionOrgEnv] = os.Getenv(keeper.MerlionOrgEnv)
+	data[keeper.MerlionSkladEnv] = os.Getenv(keeper.MerlionSkladEnv)
 
-	if SkladToken == "" || MerlionCredentials == "" || SkladName == "" || OrgName == "" {
-		log.Fatalf("Данные для входа не обнаружены")
+	data[keeper.NetlabLoginEnv] = os.Getenv(keeper.NetlabLoginEnv)
+	data[keeper.NetlabPasswordEnv] = os.Getenv(keeper.NetlabPasswordEnv)
+	data[keeper.NetlabOrgEnv] = os.Getenv(keeper.NetlabOrgEnv)
+	data[keeper.NetlabSkladEnv] = os.Getenv(keeper.NetlabSkladEnv)
+
+	data[keeper.SkladTokenEnv] = os.Getenv(keeper.SkladTokenEnv)
+	data[keeper.CatSkladNameEnv] = os.Getenv(keeper.CatSkladNameEnv)
+
+	for _, v := range data {
+		if v == "" {
+			log.Fatalf("Данные для входа не обнаружены")
+		}
 	}
-	keeper.K.SetData(SkladToken, MerlionCredentials, SkladName, OrgName, CatName)
+
+	keeper.K.SetData(data)
 }
 
 func importCSV() {

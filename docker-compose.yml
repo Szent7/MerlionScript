@@ -4,6 +4,8 @@ services:
     #ports:
     #  - "10015:10015"
     volumes:
-      - /data:/app/data
+      - ~/data:/app/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     network_mode: bridge

@@ -100,12 +100,22 @@ func (cf *CSVFile) ImportCodes() error {
 		return err
 	}
 	countRecords := len(records) - 1
+	var tableName string
 	for i := 1; i < len(records); i++ {
+		switch records[i][3] {
+		case "merlion":
+			tableName = typesDB.MerlionTable
+		case "netlab":
+			tableName = typesDB.NetlabTable
+		default:
+			log.Printf("Некорректный формат сервиса при импорте CSV (строка %d): %s\n", i+1, records[i][3])
+			continue
+		}
 		added, err := dbInstance.AddCodeRecord(&typesDB.Codes{
 			MoySklad:     records[i][0],
 			Manufacturer: records[i][1],
-			Merlion:      records[i][2],
-		})
+			Service:      records[i][2],
+		}, tableName)
 		if err != nil {
 			log.Printf("Ошибка при импорте CSV (строка %d): %s\n", i+1, err)
 		}

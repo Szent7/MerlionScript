@@ -1,27 +1,27 @@
-package merlion
+package requests
 
 import (
 	"MerlionScript/keeper"
-	"MerlionScript/types/soapTypes"
+	merlionTypes "MerlionScript/types/soapTypes/merlion"
 	"MerlionScript/utils/soap"
 	"encoding/xml"
 	"fmt"
 	"log"
 )
 
-func GetItemsImagesByItemId(itemId string) []soapTypes.ItemImage {
+func GetItemsImagesByItemId(itemId string) []merlionTypes.ItemImage {
 	//fmt.Println(base64.StdEncoding.EncodeToString([]byte(credentials)))
-	req := soapTypes.ItemImageReq{
-		Item_id: []soapTypes.ItemId{{Item: itemId}},
+	req := merlionTypes.ItemImageReq{
+		//Item_id: merlionTypes.ItemId{{itemId}},
 		//Page:   "1",
 	}
 	//var res = make([]types.ItemMenu, 100)
-	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, soapTypes.GetItemsImagesUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, merlionTypes.GetItemsImagesUrl, req)
 	if err != nil {
 		log.Fatalf("SoapCallHandleResponse error: %s", err)
 	}
-	var item soapTypes.ItemImage
-	var items []soapTypes.ItemImage
+	var item merlionTypes.ItemImage
+	var items []merlionTypes.ItemImage
 	for {
 		token, err := decoder.Token()
 		if err != nil {

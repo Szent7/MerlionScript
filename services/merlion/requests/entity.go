@@ -1,4 +1,4 @@
-package merlion
+package requests
 
 import "MerlionScript/utils/db/typesDB"
 
@@ -15,6 +15,6 @@ func CreateMerlionEntity(codes typesDB.Codes) *merlionEntity {
 	return &merlionEntity{
 		MoySkladCode:     codes.MoySklad,
 		ManufacturerCode: codes.Manufacturer,
-		MerlionCode:      codes.Merlion,
+		MerlionCode:      codes.Service,
 	}
 }

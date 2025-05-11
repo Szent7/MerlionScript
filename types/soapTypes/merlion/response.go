@@ -51,3 +51,8 @@ type ItemAvail struct {
 	Online_Reserve        int      `xml:"Online_Reserve"`
 	ReserveCost           float32  `xml:"ReserveCost"`
 }
+
+type ItemAvailPrice struct {
+	PriceClientRUB_MSK  float32
+	AvailableClient_MSK int
+}

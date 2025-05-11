@@ -1,25 +1,10 @@
-package restTypes
+package sklad
 
 import (
 	"time"
 
 	"github.com/google/uuid"
 )
-
-const (
-	ItemUrl         = "https://api.moysklad.ru/api/remap/1.2/entity/product"
-	GroupUrl        = "https://api.moysklad.ru/api/remap/1.2/entity/productfolder"
-	StoreUrl        = "https://api.moysklad.ru/api/remap/1.2/entity/store"
-	OrganizationUrl = "https://api.moysklad.ru/api/remap/1.2/entity/organization"
-	AcceptanceUrl   = "https://api.moysklad.ru/api/remap/1.2/entity/supply"
-	WoffUrl         = "https://api.moysklad.ru/api/remap/1.2/entity/loss"
-	StocksUrl       = "https://api.moysklad.ru/api/remap/1.2/report/stock/bystore/current"
-)
-
-type Response struct {
-	Body       []byte
-	StatusCode int
-}
 
 type TestProductMeta struct {
 	Meta Meta `json:"meta"`
