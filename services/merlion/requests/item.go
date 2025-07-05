@@ -94,7 +94,7 @@ func GetItemsAvailByItemIdBatch(itemId []string) (*[]merlionTypes.ItemAvail, err
 		list[i].Item = itemId[i]
 	}*/
 	req := merlionTypes.ItemAvailReq{
-		Item_id:         merlionTypes.ItemId{itemId},
+		Item_id:         merlionTypes.ItemId{Item: itemId},
 		Shipment_method: "ДОСТАВКА",
 		Shipment_date:   GetNextDate(),
 		//Page:   "1",
@@ -172,7 +172,7 @@ func GetItemsAvailByItemIdBatch(itemId []string) (*[]merlionTypes.ItemAvail, err
 func GetItemsByItemIdBatch(itemId []string) (*[]merlionTypes.ItemCatalog, error) {
 	//fmt.Println(base64.StdEncoding.EncodeToString([]byte(credentials)))
 	req := merlionTypes.ItemCatalogReq{
-		Item_id: merlionTypes.ItemId{itemId},
+		Item_id: merlionTypes.ItemId{Item: itemId},
 		//Page:   "1",
 	}
 	//var res = make([]types.ItemMenu, 100)

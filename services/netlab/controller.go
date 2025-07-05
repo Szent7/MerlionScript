@@ -24,14 +24,14 @@ import (
 var itemsGlobal []netlab.ItemNetlab
 
 // для дебага
-func fillItemsGlobal(token string) {
+/*func fillItemsGlobal(token string) {
 	itemsGlobal = make([]netlab.ItemNetlab, 0, 200)
 	catID, _ := netlabReq.GetAllCategoryCodes(token)
 	for _, cat := range catID {
 		items, _ := netlabReq.GetItemsByCatIdFormatted(cat.ID, token)
 		itemsGlobal = append(itemsGlobal, items...)
 	}
-}
+}*/
 
 func CheckNetlabNewPositions(ctx context.Context, token string) error {
 	select {
@@ -135,9 +135,9 @@ func CreateNewPositionsMS(ctx context.Context, token string) error {
 
 		var createdItems int = 0
 		for _, item := range *items {
-			if createdItems >= 25 {
+			/*if createdItems >= 25 {
 				break
-			}
+			}*/
 			select {
 			case <-ctx.Done():
 				return nil
@@ -402,6 +402,7 @@ func UpdateRemainsMS(ctx context.Context, token string) error {
 		acceptanceList := []skladTypes.PositionsAdd{}
 		//Список списания
 		woffList := []skladTypes.PositionsAdd{}
+		//addition := 0
 		for _, item := range *items {
 			select {
 			case <-ctx.Done():
@@ -438,29 +439,39 @@ func UpdateRemainsMS(ctx context.Context, token string) error {
 
 				itemRemainsNetlab, found := getGlobalItemsRecord(item.Service, itemsGlobal)
 				if !found {
-					log.Printf("Ошибка при получении остатков с Нетлаба (updateRemainsMS) netlabCode = %s\n", item.Service)
-					continue
+					itemRemainsNetlab, err = netlabReq.GetItemsByItemIdFormatted(item.Service, token)
+					if err != nil {
+						log.Printf("Ошибка при получении остатков с Нетлаба (updateRemainsMS) netlabCode = %s\n", item.Service)
+						continue
+					}
 				}
 				if itemMS.IsSerialTrackable {
 					log.Printf("Товар с серийным учетом в приемку/списание не попал (updateRemainsMS) msCode = %s isSerialTrackable = %t\n", item.MoySklad, itemMS.IsSerialTrackable)
 					continue
 				}
 				itemRemainsMS, err := skladReq.GetItemsAvail(itemMS.Id, storeUUID)
-				if err != nil || itemRemainsMS < 0 {
+				if err != nil {
 					log.Printf("Ошибка при получении остатков с мс (updateRemainsMS) msCode = %s: %s\n", item.MoySklad, err)
 					continue
 				}
 
+				//Если остаток меньше 0, то делаем приемку с учетом этого
+				/*addition = 0
+				if itemRemainsMS < 0 {
+					addition = -itemRemainsMS
+					itemRemainsMS = 0
+				}*/
 				if itemRemainsMS > itemRemainsNetlab.Remains {
 					woffList = append(woffList, skladTypes.PositionsAdd{
 						Quantity:   itemRemainsMS - itemRemainsNetlab.Remains,
 						Assortment: skladTypes.MetaMiddle{Meta: itemMS.Meta},
 					})
+					//fmt.Printf("%s - %s\n", item.Service, item.MoySklad)
 				} else if itemRemainsMS < itemRemainsNetlab.Remains {
 					rub_price := itemRemainsNetlab.Price * currency
 					half_rub_price := int(math.Ceil(rub_price * 100))
 					acceptanceList = append(acceptanceList, skladTypes.PositionsAdd{
-						Quantity:   itemRemainsNetlab.Remains - itemRemainsMS,
+						Quantity:   itemRemainsNetlab.Remains - itemRemainsMS, //+ addition
 						Assortment: skladTypes.MetaMiddle{Meta: itemMS.Meta},
 						Price:      float32(half_rub_price),
 					})

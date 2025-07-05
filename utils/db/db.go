@@ -87,6 +87,17 @@ func (instance *DBInstance) Init() error {
 		uploaded_image INTEGER DEFAULT 0
     );
 
+		CREATE TABLE IF NOT EXISTS codes_softtronik (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+		ms_own_id INTEGER,
+		moy_sklad TEXT NOT NULL,
+		manufacturer TEXT NOT NULL UNIQUE,
+        softtronik TEXT NOT NULL,
+		manufacturer_name TEXT NOT NULL DEFAULT "",
+		try_upload_image INTEGER DEFAULT 0,
+		uploaded_image INTEGER DEFAULT 0
+    );
+
 	CREATE TABLE IF NOT EXISTS codes_ids (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
 		source TEXT NOT NULL,
@@ -114,7 +125,7 @@ func (instance *DBInstance) Init() error {
 	CREATE TRIGGER IF NOT EXISTS trg_delete_merlion 
 	AFTER DELETE ON codes_merlion
 	BEGIN
-		DELETE FROM codes_ids WHERE ms_own_id = OLD.id;
+		DELETE FROM codes_ids WHERE ms_own_id = OLD.ms_own_id;
 	END;
 
 	CREATE TRIGGER IF NOT EXISTS trg_insert_netlab 
@@ -137,7 +148,30 @@ func (instance *DBInstance) Init() error {
 	CREATE TRIGGER IF NOT EXISTS trg_delete_netlab 
 	AFTER DELETE ON codes_netlab
 	BEGIN
-		DELETE FROM codes_ids WHERE ms_own_id = OLD.id;
+		DELETE FROM codes_ids WHERE ms_own_id = OLD.ms_own_id;
+	END;
+
+		CREATE TRIGGER IF NOT EXISTS trg_insert_softtronik
+	AFTER INSERT ON codes_softtronik
+	BEGIN
+		INSERT OR IGNORE INTO codes_ids (source, ms_own_id, manufacturer_name)
+		SELECT 'codes_softtronik', NEW.ms_own_id, NEW.manufacturer_name
+		WHERE NEW.ms_own_id IS NOT NULL AND NEW.ms_own_id <> 0;
+	END;
+
+	CREATE TRIGGER IF NOT EXISTS after_update_softtronik
+	AFTER UPDATE ON codes_softtronik
+	FOR EACH ROW
+	BEGIN
+			INSERT OR IGNORE INTO codes_ids (source, ms_own_id, manufacturer_name)
+			SELECT 'codes_softtronik', NEW.ms_own_id, NEW.manufacturer_name
+			WHERE NEW.ms_own_id IS NOT NULL AND NEW.ms_own_id <> 0;
+	END;
+
+	CREATE TRIGGER IF NOT EXISTS trg_delete_softtronik 
+	AFTER DELETE ON codes_softtronik
+	BEGIN
+		DELETE FROM codes_ids WHERE ms_own_id = OLD.ms_own_id;
 	END;
 	`
 
@@ -182,7 +216,7 @@ func (instance *DBInstance) AddCodeRecord(record *typesDB.Codes, tableName strin
 }
 
 func (instance *DBInstance) GetCodeRecordByManufacturerAll(manufacturer string) (typesDB.Codes, bool, error) {
-	tableNames := []string{typesDB.MerlionTable, typesDB.NetlabTable}
+	tableNames := []string{typesDB.MerlionTable, typesDB.NetlabTable, typesDB.SofttronikTable}
 	for _, tn := range tableNames {
 		record, exists, err := instance.GetCodeRecordByManufacturer(manufacturer, tn)
 		if err != nil {
@@ -411,6 +445,8 @@ func getServiceByTableName(tableName string) string {
 		return typesDB.MerlionService
 	case typesDB.NetlabTable:
 		return typesDB.NetlabService
+	case typesDB.SofttronikTable:
+		return typesDB.SofttronikService
 	default:
 		return ""
 	}

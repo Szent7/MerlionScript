@@ -7,18 +7,18 @@ import (
 	"encoding/xml"
 	"fmt"
 	"log"
+	"path"
+	"strings"
 )
 
-func GetItemsImagesByItemId(itemId string) []merlionTypes.ItemImage {
-	//fmt.Println(base64.StdEncoding.EncodeToString([]byte(credentials)))
+func getImagesByItemId(itemId string) ([]merlionTypes.ItemImage, error) {
 	req := merlionTypes.ItemImageReq{
-		//Item_id: merlionTypes.ItemId{{itemId}},
-		//Page:   "1",
+		Item_id: merlionTypes.ItemId{Item: []string{itemId}},
 	}
-	//var res = make([]types.ItemMenu, 100)
 	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, merlionTypes.GetItemsImagesUrl, req)
 	if err != nil {
-		log.Fatalf("SoapCallHandleResponse error: %s", err)
+		log.Printf("Ошибка при SOAP-запросе (getImagesByItemId): %s\n", err)
+		return nil, err
 	}
 	var item merlionTypes.ItemImage
 	var items []merlionTypes.ItemImage
@@ -43,5 +43,32 @@ func GetItemsImagesByItemId(itemId string) []merlionTypes.ItemImage {
 			}
 		}
 	}
-	return items
+	return items, nil
+}
+
+func GetImagesByItemIdFormatted(id string) ([]string, error) {
+	rawImages, err := getImagesByItemId(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var images []string = make([]string, 0, len(rawImages)/3)
+	for i := range rawImages {
+		ext := path.Ext(rawImages[i].FileName)
+		if ext == ".png" || ext == ".jpg" {
+
+			base := rawImages[i].FileName[:len(rawImages[i].FileName)-len(ext)]
+
+			parts := strings.Split(base, "_")
+			if len(parts) < 3 {
+				continue
+			}
+
+			if parts[2] == "m" {
+				images = append(images, rawImages[i].FileName)
+			}
+		}
+	}
+
+	return images, nil
 }

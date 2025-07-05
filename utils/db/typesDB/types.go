@@ -12,10 +12,12 @@ type Codes struct {
 }
 
 const (
-	MerlionTable = "codes_merlion"
-	NetlabTable  = "codes_netlab"
-	OwnIDsTable  = "codes_ids"
+	MerlionTable    = "codes_merlion"
+	NetlabTable     = "codes_netlab"
+	SofttronikTable = "codes_softtronik"
+	OwnIDsTable     = "codes_ids"
 
-	MerlionService = "merlion"
-	NetlabService  = "netlab"
+	MerlionService    = "merlion"
+	NetlabService     = "netlab"
+	SofttronikService = "softtronik"
 )

@@ -123,6 +123,7 @@ func GetItemsAvail(itemUUID string, storeUUID string) (int, error) {
 	if len(items) == 0 {
 		return 0, nil
 	}
+
 	return items[0].Stock, nil
 }
 

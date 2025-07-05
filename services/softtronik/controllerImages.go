@@ -1,9 +1,9 @@
-package netlab
+package softtronik
 
 import (
 	"MerlionScript/cache"
-	netlabReq "MerlionScript/services/netlab/requests"
 	skladReq "MerlionScript/services/sklad/requests"
+	softtronikReq "MerlionScript/services/softtronik/requests"
 	skladTypes "MerlionScript/types/restTypes/sklad"
 	"MerlionScript/utils/db"
 	"MerlionScript/utils/db/typesDB"
@@ -17,11 +17,11 @@ import (
 )
 
 // Проверка на существование картинок
-// Вытягивание картинок из нетлаба
+// Вытягивание картинок из Софт-троника
 // Заливка картинок на МС и обновление записи
-func UploadAllImages(ctx context.Context, token string) error {
+func UploadAllImages(ctx context.Context) error {
 	//fillItemsGlobal(token)
-	fmt.Println("Начал обновлять изображения на мс по нетлаб")
+	fmt.Println("Начал обновлять изображения на мс по Софт-троник")
 	select {
 	case <-ctx.Done():
 		fmt.Println("UploadAllImages работу закончил из-за контекста")
@@ -34,7 +34,7 @@ func UploadAllImages(ctx context.Context, token string) error {
 			return err
 		}
 		//Записи из БД
-		items, err := dbInstance.GetCodeRecordsFilledMSWithNoImage(typesDB.NetlabTable)
+		items, err := dbInstance.GetCodeRecordsFilledMSWithNoImage(typesDB.SofttronikTable)
 		if err != nil {
 			log.Printf("Ошибка при получении записей из БД (UploadAllImages): %s\n", err)
 			return err
@@ -90,23 +90,23 @@ func UploadAllImages(ctx context.Context, token string) error {
 				} else if len(msImages.Rows) == 10 { //Если на МС уже есть 10 картинок
 					item.LoadedImage = 1
 					item.TryLoadImage = 1
-					if err = dbInstance.EditCodeRecord(&item, typesDB.NetlabTable); err != nil {
-						log.Printf("Ошибка при изменении записи в БД (createNewPositionsMS) netlabCode = %s: %s\n", item.Service, err)
+					if err = dbInstance.EditCodeRecord(&item, typesDB.SofttronikTable); err != nil {
+						log.Printf("Ошибка при изменении записи в БД (createNewPositionsMS) softtronikCode = %s: %s\n", item.Service, err)
 					}
 					continue
 				}
-				//Если изображений нет на МС, то заливаем новые из нетлаба
-				//Вытягиваем изображения из нетлаба
-				listImages, err := netlabReq.GetImagesByItemIdFormatted(item.Service, token)
+				//Если изображений нет на МС, то заливаем новые из Софт-троника
+				//Вытягиваем изображения из Софт-троника
+				listImages, err := softtronikReq.GetImagesByItemIdFormatted(item.Service)
 				if err != nil {
-					log.Printf("Ошибка при получении записей из нетлаба (UploadAllImages) manufacturer = %s: %s\n", item.Manufacturer, err)
+					log.Printf("Ошибка при получении записей из Софт-троника (UploadAllImages) manufacturer = %s: %s\n", item.Manufacturer, err)
 					continue
 				}
 				uploadedImages := len(listImages)
 				for k, v := range listImages {
 					response, contentType, err := rest.CreateRequestImageHeader("GET", v, nil, "")
 					if err != nil || response.StatusCode != 200 {
-						log.Printf("Ошибка при получении изображений из нетлаба (UploadAllImages) url = %s: %s\n", v, err)
+						log.Printf("Ошибка при получении изображений из Софт-троника (UploadAllImages) url = %s: %s\n", v, err)
 						continue
 					}
 					ext := getExtensionFromContentType(contentType)
@@ -119,7 +119,7 @@ func UploadAllImages(ctx context.Context, token string) error {
 						totalUploadedImages++
 						resp, err := skladReq.UploadImage(itemMS.Id, newImage)
 						if err != nil || resp.StatusCode != 200 {
-							log.Printf("Ошибка при загрузке изображения на МС (UploadAllImages) netlabCode = %s: %s\n", item.Service, err)
+							log.Printf("Ошибка при загрузке изображения на МС (UploadAllImages) softtronikCode = %s: %s\n", item.Service, err)
 							uploadedImages--
 							totalUploadedImages--
 						}
@@ -128,19 +128,19 @@ func UploadAllImages(ctx context.Context, token string) error {
 						totalUploadedImages--
 					}
 				}
-				//если загружено хотя бы одно изображение или их нет на нетлабе
+				//если загружено хотя бы одно изображение или их нет на Софт-тронике
 				if uploadedImages >= 0 || len(listImages) == 0 {
 					item.TryLoadImage = 1
-					if err = dbInstance.EditCodeRecord(&item, typesDB.NetlabTable); err != nil {
-						log.Printf("Ошибка при изменении записи в БД (createNewPositionsMS) netlabCode = %s: %s\n", item.Service, err)
+					if err = dbInstance.EditCodeRecord(&item, typesDB.SofttronikTable); err != nil {
+						log.Printf("Ошибка при изменении записи в БД (createNewPositionsMS) softtronikCode = %s: %s\n", item.Service, err)
 						continue
 					}
 				}
 				time.Sleep(time.Millisecond * 150)
 			}
 		}
-		log.Printf("Добавлено %d изображений из Нетлаба\n", totalUploadedImages)
-		fmt.Println("Закончил обновлять изображения на мс по нетлаб")
+		log.Printf("Добавлено %d изображений из Софт-троника\n", totalUploadedImages)
+		fmt.Println("Закончил обновлять изображения на мс по Софт-троник")
 		return nil
 	}
 }

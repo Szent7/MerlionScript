@@ -64,7 +64,7 @@ func importENV() {
 	}
 
 	//SkladCredentials := os.Getenv("MOY_SKLAD_CREDENTIALS")
-	var data = make(map[string]string, 9)
+	var data = make(map[string]string, 13)
 	data[keeper.MerlionCredentialsEnv] = os.Getenv(keeper.MerlionCredentialsEnv)
 	data[keeper.MerlionOrgEnv] = os.Getenv(keeper.MerlionOrgEnv)
 	data[keeper.MerlionSkladEnv] = os.Getenv(keeper.MerlionSkladEnv)
@@ -73,6 +73,11 @@ func importENV() {
 	data[keeper.NetlabPasswordEnv] = os.Getenv(keeper.NetlabPasswordEnv)
 	data[keeper.NetlabOrgEnv] = os.Getenv(keeper.NetlabOrgEnv)
 	data[keeper.NetlabSkladEnv] = os.Getenv(keeper.NetlabSkladEnv)
+
+	data[keeper.SofttronikContractorKeyEnv] = os.Getenv(keeper.SofttronikContractorKeyEnv)
+	data[keeper.SofttronikContractKeyEnv] = os.Getenv(keeper.SofttronikContractKeyEnv)
+	data[keeper.SofttronikOrgEnv] = os.Getenv(keeper.SofttronikOrgEnv)
+	data[keeper.SofttronikSkladEnv] = os.Getenv(keeper.SofttronikSkladEnv)
 
 	data[keeper.SkladTokenEnv] = os.Getenv(keeper.SkladTokenEnv)
 	data[keeper.CatSkladNameEnv] = os.Getenv(keeper.CatSkladNameEnv)

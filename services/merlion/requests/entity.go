@@ -2,9 +2,6 @@ package requests
 
 import "MerlionScript/utils/db/typesDB"
 
-// var code = "I00001"
-var counter = 1
-
 type merlionEntity struct {
 	MoySkladCode     string
 	ManufacturerCode string

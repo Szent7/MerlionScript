@@ -1,125 +1,98 @@
-package merlion
+package softtronik
 
 import (
 	"MerlionScript/cache"
 	"MerlionScript/keeper"
-	merlionReq "MerlionScript/services/merlion/requests"
+	"MerlionScript/services/merlion"
 	"MerlionScript/services/sklad"
 	skladReq "MerlionScript/services/sklad/requests"
+	softtronikReq "MerlionScript/services/softtronik/requests"
 	skladTypes "MerlionScript/types/restTypes/sklad"
-	merlionTypes "MerlionScript/types/soapTypes/merlion"
+	"MerlionScript/types/restTypes/softtronik"
 	"MerlionScript/utils/db"
 	"MerlionScript/utils/db/typesDB"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 	"sync/atomic"
 	"time"
 )
 
-const (
-	//maxThreads = 10
-	batchSize = 500
-)
+var itemsGlobal []softtronik.ProductItem
 
-// Проверяем Мерлион на наличие новых позиций и добавляем их в БД
-func CheckMerlionNewPositions(ctx context.Context) error {
+func CheckSofttronikNewPositions(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
-		fmt.Println("checkMerlionNewPositions работу закончил из-за контекста")
+		fmt.Println("CheckSofttronikNewPositions работу закончил из-за контекста")
 		return nil
 	default:
-		fmt.Println("Начал проверку новых позиций на Мерлионе")
-		catID, err := merlionReq.GetAllCatalogCodes()
+		fmt.Println("Начал проверку новых позиций на Софт-тронике")
+		catID, err := softtronikReq.GetAllCategoryCodes()
 		if err != nil {
 			return err
 		}
-
 		if len(catID) == 0 {
 			return fmt.Errorf("ошибка при получении номеров каталога: len(catID) = 0")
 		}
-
 		dbInstance, err := db.GetDBInstance()
 		if err != nil {
-			log.Printf("Ошибка при получении экземпляра БД (checkMerlionNewPositions): %s\n", err)
+			log.Printf("Ошибка при получении экземпляра БД (CheckSofttronikNewPositions): %s\n", err)
 			return err
 		}
-
 		var countRecords int32 = 0
-		//var idW = 0
-		//var wg sync.WaitGroup
-		//sem := make(chan struct{}, maxThreads)
-		//re := regexp.MustCompile(`(?i)dahua`)
-
+		itemsGlobal = make([]softtronik.ProductItem, 0, 200)
 		//цикл по каталогам
-		for i, id := range catID {
-			fmt.Printf("Обработка каталога %s %d/%d\n", id, i+1, len(catID))
-			//wg.Add(1)
-			//go func(id string) {
-			//defer wg.Done()
+		for i, cat := range catID {
+			fmt.Printf("Обработка каталога %s %d/%d\n", cat.Name, i+1, len(catID))
 			select {
 			case <-ctx.Done():
-				//wg.Done()
 				return nil
 			default:
-				//sem <- struct{}{}
-				items, err := merlionReq.GetItemsByCatId(id)
+				items, err := softtronikReq.GetItemsByCatId(cat.ID)
 				if err != nil {
-					log.Printf("Ошибка при получении товаров по каталогу (checkMerlionNewPositions) id = %s: %s\n", id, err)
-					//<-sem
+					log.Printf("Ошибка при получении товаров по каталогу (CheckSofttronikNewPositions) id = %s: %s\n", cat.Name, err)
+					continue
 				}
+				itemsGlobal = append(itemsGlobal, items...)
 				//цикл по товарам из каталога
 				for _, item := range items {
-					lower := strings.ToLower(item.Brand)
-					//if re.MatchString(item.Brand) {
-					if strings.Contains(lower, "dahua") || strings.Contains(lower, "tenda") {
-						//if strings.Contains(lower, "dahua") {
-						newRecord := typesDB.Codes{
-							MoySklad:         "",
-							Manufacturer:     item.Vendor_part,
-							ManufacturerName: item.Brand,
-							Service:          item.No,
-							MsOwnId:          0,
-						}
-						record, exists, err := dbInstance.GetCodeRecordByManufacturerAll(item.Vendor_part)
-						if err != nil {
-							log.Printf("Ошибка при получении записи из БД (checkMerlionNewPositions) manufacturer = %s: %s\n", item.Vendor_part, err)
-							continue
-						}
-						if exists {
-							newRecord.MoySklad = record.MoySklad
-							newRecord.MsOwnId = record.MsOwnId
-						}
-						//Добавляем каждую позицию, т.к. в БД могут быть только уникальные записи
-						added, err := dbInstance.AddCodeRecord(&newRecord, typesDB.MerlionTable)
-						if err != nil {
-							log.Printf("Ошибка при добавлении новой записи из Мерлиона (checkMerlionNewPositions) manufacturer = %s: %s\n", item.Vendor_part, err)
-							continue
-						}
-						if added {
-							atomic.AddInt32(&countRecords, 1)
-						}
+					//Добавляем каждую позицию, т.к. в БД могут быть только уникальные записи
+					newRecord := typesDB.Codes{
+						MoySklad:         "",
+						Manufacturer:     item.Article,
+						ManufacturerName: "dahua",
+						Service:          item.Code,
+						MsOwnId:          0,
+					}
+					record, exists, err := dbInstance.GetCodeRecordByManufacturerAll(item.Article)
+					if err != nil {
+						log.Printf("Ошибка при получении записи из БД (CheckSofttronikNewPositions) manufacturer = %s: %s\n", item.Article, err)
+						continue
+					}
+					if exists {
+						newRecord.MoySklad = record.MoySklad
+						newRecord.MsOwnId = record.MsOwnId
+					}
+					added, err := dbInstance.AddCodeRecord(&newRecord, typesDB.SofttronikTable)
+					if err != nil {
+						log.Printf("Ошибка при добавлении новой записи из Софт-троника (CheckSofttronikNewPositions) manufacturer = %s: %s\n", item.Article, err)
+						continue
+					}
+					if added {
+						atomic.AddInt32(&countRecords, 1)
 					}
 				}
-				//wg.Done()
-				//<-sem
 			}
-			//}(id)
-			//idW++
-			time.Sleep(time.Millisecond * 150)
 		}
-		fmt.Println("Закончил проверку новых позиций на Мерлионе")
-
-		//wg.Wait()
-		//fmt.Printf("Всего горутин запущено: %d\n", idW)
-		fmt.Printf("(%s) Добавлено %d записей при проверке позиций в Мерлионе\n", sklad.GetTimeNow(), countRecords)
+		fmt.Println("Закончил проверку новых позиций в Софт-тронике")
+		fmt.Printf("(%s) Добавлено %d записей при проверке позиций в Софт-тронике\n", sklad.GetTimeNow(), countRecords)
 		return nil
 	}
 }
 
-// Создаем отсутствующие позиции на МС, добавляем в БД существующие
 func CreateNewPositionsMS(ctx context.Context) error {
 	fmt.Println("Начал сверять новые позиции с мс")
 	select {
@@ -133,7 +106,7 @@ func CreateNewPositionsMS(ctx context.Context) error {
 			return err
 		}
 
-		items, err := dbInstance.GetCodeRecordsNoMS(typesDB.MerlionTable)
+		items, err := dbInstance.GetCodeRecordsNoMS(typesDB.SofttronikTable)
 		if err != nil {
 			log.Printf("Ошибка при получении записей из БД (createNewPositionsMS): %s\n", err)
 			return err
@@ -149,30 +122,10 @@ func CreateNewPositionsMS(ctx context.Context) error {
 			log.Printf("Ошибка при получении метаданных склада (updateRemainsMS): %s\n", err)
 			return err
 		}
-		//Остатки с Мерлиона
-		itemsManufacturer := make([]string, len(*items))
-		for i := range *items {
-			itemsManufacturer[i] = (*items)[i].Service
-		}
-		MerlionItemsRaw := make([]merlionTypes.ItemCatalog, 0, len(*items))
-		for i := 0; i < len(*items); i += batchSize {
-			end := min(i+batchSize, len(*items))
-			itemPart, err := merlionReq.GetItemsByItemIdBatch(itemsManufacturer[i:end])
-			if err != nil || len(*itemPart) == 0 {
-				log.Printf("Ошибка при получении остатков с Мерлиона (updateRemainsMS): %s\n", err)
-				return err
-			}
-			MerlionItemsRaw = append(MerlionItemsRaw, *itemPart...)
-		}
-		MerlionItems := make(map[string]merlionTypes.ItemCatalog, len(MerlionItemsRaw))
-		for i := range MerlionItemsRaw {
-			if MerlionItemsRaw[i].No != "" {
-				MerlionItems[MerlionItemsRaw[i].No] = MerlionItemsRaw[i]
-			}
-		}
+
 		var createdItems int = 0
 		for _, item := range *items {
-			/*if createdItems >= 25 {
+			/*if createdItems >= 50 {
 				break
 			}*/
 			select {
@@ -190,13 +143,13 @@ func CreateNewPositionsMS(ctx context.Context) error {
 					log.Printf("Ошибка при декодировании item (createNewPositionsMS) manufacturer = %s: %s", item.Manufacturer, err)
 					continue
 				}
-				itemCatalog, exist := MerlionItems[item.Service]
-				if !exist {
-					log.Printf("Ошибка при получении записи из Мерлиона (createNewPositionsMS) merlionCode = %s: %s\n", item.Service, err)
+				itemCatalog, found := getGlobalItemsRecord(item.Service, itemsGlobal)
+				if !found {
+					log.Printf("Ошибка при получении записи из Софт-троника (createNewPositionsMS) softtronikCode = %s: %s\n", item.Service, err)
 				}
 				//Если этого товара не существует на МС
 				if len(msItems.Rows) == 0 {
-					if sklad.CreateNewItemMS(&item, itemCatalog.Name, catMeta, &counter, dbInstance, typesDB.MerlionTable) {
+					if sklad.CreateNewItemMS(&item, itemCatalog.Name+" "+itemCatalog.Article, catMeta, &counter, dbInstance, typesDB.SofttronikTable) {
 						createdItems++
 					}
 				} else { //Если найдены совпадения/похожие
@@ -205,34 +158,34 @@ func CreateNewPositionsMS(ctx context.Context) error {
 					var dhiProblem bool = false
 					var emptyArticleProblem bool = false
 					var sProblem bool = false
-					var merlionSnum int = -10
+					var softtronikSnum int = -10
 					var msSnum int = -11
 					var bProblem bool = false
-					var merlionBnum int = -10
+					var softtronikBnum int = -10
 					var msBnum int = -11
-					itemMerlion, err := merlionReq.GetItemsByItemIdBatch([]string{item.Service})
+					/*itemMerlion, err := merlionReq.GetItemsByItemIdBatch([]string{item.Service})
 					if err != nil || len(*itemMerlion) == 0 || (*itemMerlion)[0].No == "" {
-						log.Printf("Ошибка при получении записи из Мерлиона (createNewPositionsMS_2) merlionCode = %s: %s\n", item.Service, err)
+						log.Printf("Ошибка при получении записи из Софт-троника (createNewPositionsMS_2) softtronikCode = %s: %s\n", item.Service, err)
 						continue
-					}
+					}*/
 					// Вытягиваем -S0/-0000B номер из мерлиона, если есть
-					substringsMer := strings.Fields((*itemMerlion)[0].Name)
-					for _, subS := range substringsMer {
-						merlionSnum = ExtractNumberFromS(subS)
-						if merlionSnum >= 0 {
+					substringssofttronik := strings.Fields(itemCatalog.Name)
+					for _, subS := range substringssofttronik {
+						softtronikSnum = merlion.ExtractNumberFromS(subS)
+						if softtronikSnum >= 0 {
 							break
 						}
-						merlionBnum = ExtractNumberFromB(subS)
-						if merlionBnum >= 0 {
+						softtronikBnum = merlion.ExtractNumberFromB(subS)
+						if softtronikBnum >= 0 {
 							break
 						}
 					}
-					if merlionSnum == -1 {
-						log.Printf("Ошибка при парсинге -S0 номера из Мерлиона (createNewPositionsMS_2) merlionCode = %s: %s\n", item.Service, err)
+					if softtronikSnum == -1 {
+						log.Printf("Ошибка при парсинге -S0 номера из Софт-троника (createNewPositionsMS_2) softtronikCode = %s: %s\n", item.Service, err)
 						continue
 					}
-					if merlionBnum == -1 {
-						log.Printf("Ошибка при парсинге -0000B номера из Мерлиона (createNewPositionsMS_2) merlionCode = %s: %s\n", item.Service, err)
+					if softtronikBnum == -1 {
+						log.Printf("Ошибка при парсинге -0000B номера из Софт-троника (createNewPositionsMS_2) softtronikCode = %s: %s\n", item.Service, err)
 						continue
 					}
 					//TODO позиция с 3 артикулами, добавить проверку на уникальность кода мс
@@ -250,24 +203,24 @@ func CreateNewPositionsMS(ctx context.Context) error {
 							break
 						}
 						// Если начинается на DH-/DHI-, то убираем их из сравнения
-						msManufacturer := IgnoreDHManufacturer(msItems.Rows[i].Name)
-						merManufacturer := IgnoreDHManufacturer(item.Manufacturer)
+						msManufacturer := merlion.IgnoreDHManufacturer(msItems.Rows[i].Name)
+						merManufacturer := merlion.IgnoreDHManufacturer(item.Manufacturer)
 						if skladReq.СontainsSubstring(msManufacturer, merManufacturer) {
 							dhiProblem = true
 							break
 						}
 						// Если заканчивается на -S0
-						if CheckSManufacturer(msItems.Rows[i].Name, item.Manufacturer) && merlionSnum >= 0 {
+						if merlion.CheckSManufacturer(msItems.Rows[i].Name, item.Manufacturer) && softtronikSnum >= 0 {
 							// Вытягиваем -S0 номер из мс, если есть
 							substringsMS := strings.Fields(msItems.Rows[i].Name)
 							for _, subS := range substringsMS {
-								msSnum = ExtractNumberFromS(subS)
+								msSnum = merlion.ExtractNumberFromS(subS)
 								if msSnum >= 0 {
 									break
 								}
 							}
 							// Если номера совпали
-							if msSnum == merlionSnum {
+							if msSnum == softtronikSnum {
 								sProblem = true
 								founded = true
 								// Но при этом артикул пустой
@@ -282,17 +235,17 @@ func CreateNewPositionsMS(ctx context.Context) error {
 						}
 
 						// Если заканчивается на -0000B
-						if CheckBManufacturer(msItems.Rows[i].Name, item.Manufacturer) && merlionBnum >= 0 {
+						if merlion.CheckBManufacturer(msItems.Rows[i].Name, item.Manufacturer) && softtronikBnum >= 0 {
 							// Вытягиваем -0000B номер из мс, если есть
 							substringsMS := strings.Fields(msItems.Rows[i].Name)
 							for _, subS := range substringsMS {
-								msBnum = ExtractNumberFromB(subS)
+								msBnum = merlion.ExtractNumberFromB(subS)
 								if msBnum >= 0 {
 									break
 								}
 							}
 							// Если номера совпали
-							if msBnum == merlionBnum {
+							if msBnum == softtronikBnum {
 								bProblem = true
 								founded = true
 								// Но при этом артикул пустой
@@ -330,12 +283,12 @@ func CreateNewPositionsMS(ctx context.Context) error {
 					}
 					if !founded {
 						log.Printf("Полных соответствий не найдено manufacturer = %s (создаю новую позицию)", item.Manufacturer)
-						if sklad.CreateNewItemMS(&item, itemCatalog.Name, catMeta, &counter, dbInstance, typesDB.MerlionTable) {
+						if sklad.CreateNewItemMS(&item, itemCatalog.Name+" "+itemCatalog.Article, catMeta, &counter, dbInstance, typesDB.SofttronikTable) {
 							createdItems++
 						}
 						continue
 					}
-					_, exists, err := dbInstance.GetCodeRecordByMS(article, typesDB.MerlionTable)
+					_, exists, err := dbInstance.GetCodeRecordByMS(article, typesDB.SofttronikTable)
 					if err != nil {
 						log.Printf("Ошибка при получении записи из БД (createNewPositionsMS_2): %s\n", err)
 						continue
@@ -357,17 +310,17 @@ func CreateNewPositionsMS(ctx context.Context) error {
 							copyItem.MoySklad = article
 						}*/
 					// Извлекаем counter из артикула
-					ownId, _ := ExtractCounterFromOwnID(item.MoySklad)
+					ownId, _ := merlion.ExtractCounterFromOwnID(item.MoySklad)
 					if ownId > 0 {
 						item.MsOwnId = ownId
 					}
 
-					if err = dbInstance.EditCodeRecord(&item, typesDB.MerlionTable); err != nil {
-						log.Printf("Ошибка при изменении записи в БД (createNewPositionsMS) merlionCode = %s: %s\n", item.Service, err)
+					if err = dbInstance.EditCodeRecord(&item, typesDB.SofttronikTable); err != nil {
+						log.Printf("Ошибка при изменении записи в БД (createNewPositionsMS) softtronikCode = %s: %s\n", item.Service, err)
 					}
 				}
 			}
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * 150)
 		}
 		fmt.Println("Закончил сверять новые позиции с мс")
 		fmt.Printf("(%s) Добавлено %d записей на МС\n", sklad.GetTimeNow(), createdItems)
@@ -375,8 +328,8 @@ func CreateNewPositionsMS(ctx context.Context) error {
 	}
 }
 
-// Обновляем остатки
 func UpdateRemainsMS(ctx context.Context) error {
+	//fillItemsGlobal(token)
 	fmt.Println("Начал обновлять остатки на мс")
 	select {
 	case <-ctx.Done():
@@ -386,57 +339,63 @@ func UpdateRemainsMS(ctx context.Context) error {
 		//Экземпляр БД
 		dbInstance, err := db.GetDBInstance()
 		if err != nil {
-			log.Printf("Ошибка при получении экземпляра БД (createNewPositionsMS): %s\n", err)
+			log.Printf("Ошибка при получении экземпляра БД (updateRemainsMS): %s\n", err)
 			return err
 		}
 		//Записи из БД
-		items, err := dbInstance.GetCodeRecordsFilledMS(typesDB.MerlionTable)
+		items, err := dbInstance.GetCodeRecordsFilledMS(typesDB.SofttronikTable)
 		if err != nil {
-			log.Printf("Ошибка при получении записей из БД (createNewPositionsMS): %s\n", err)
+			log.Printf("Ошибка при получении записей из БД (updateRemainsMS): %s\n", err)
 			return err
 		}
+		//Записи из Софт-троника
+		catID, err := softtronikReq.GetAllCategoryCodes()
+		if err != nil {
+			return err
+		}
+		if len(catID) == 0 {
+			return fmt.Errorf("ошибка при получении номеров каталога: len(catID) = 0")
+		}
+		itemsSofttronik, err := softtronikReq.GetItemsAvailsAll(catID)
+		if err != nil {
+			log.Printf("Ошибка при получении записей из Софт-троника (updateRemainsMS): %s\n", err)
+			return err
+		}
+		itemStockSofttronik := getAvailsItemsRecords(itemsSofttronik)
 		//Мета организации МС
-		orgMeta, err := skladReq.GetOrganizationMeta(keeper.K.GetMerlionOrg())
+		orgMeta, err := skladReq.GetOrganizationMeta(keeper.K.GetSofttronikOrg())
 		if err != nil {
 			log.Printf("Ошибка при получении метаданных организации (updateRemainsMS): %s\n", err)
 			return err
 		}
 		//Мета склада МС
-		storeMeta, err := skladReq.GetStoreMeta(keeper.K.GetMerlionSklad())
+		storeMeta, err := skladReq.GetStoreMeta(keeper.K.GetSofttronikSklad())
 		if err != nil || storeMeta.Href == "" {
 			log.Printf("Ошибка при получении метаданных склада (updateRemainsMS): %s\n", err)
 			return err
 		}
 		//ID склада МС
-		storeUUID, err := skladReq.GetStoreUUID(keeper.K.GetMerlionSklad())
+		storeUUID, err := skladReq.GetStoreUUID(keeper.K.GetSofttronikSklad())
 		if err != nil || storeUUID == "" {
 			log.Printf("Ошибка при получении UUID склада (updateRemainsMS): %s\n", err)
 			return err
 		}
-		//Остатки с Мерлиона
-		itemsManufacturer := make([]string, len(*items))
-		for i := range *items {
-			itemsManufacturer[i] = (*items)[i].Service
-		}
-		MerlionItemsAvailRaw := make([]merlionTypes.ItemAvail, 0, len(*items))
-		for i := 0; i < len(*items); i += batchSize {
-			end := min(i+batchSize, len(*items))
-			availPart, err := merlionReq.GetItemsAvailByItemIdBatch(itemsManufacturer[i:end])
-			if err != nil || len(*availPart) == 0 {
-				log.Printf("Ошибка при получении остатков с Мерлиона (updateRemainsMS): %s\n", err)
-				return err
-			}
-			MerlionItemsAvailRaw = append(MerlionItemsAvailRaw, *availPart...)
-		}
-		MerlionItemsAvail := make(map[string]merlionTypes.ItemAvailPrice, len(MerlionItemsAvailRaw))
-		for i := range MerlionItemsAvailRaw {
-			if MerlionItemsAvailRaw[i].No != "" {
-				MerlionItemsAvail[MerlionItemsAvailRaw[i].No] = merlionTypes.ItemAvailPrice{
-					AvailableClient_MSK: MerlionItemsAvailRaw[i].AvailableClient_MSK,
-					PriceClientRUB_MSK:  MerlionItemsAvailRaw[i].PriceClientRUB_MSK,
+		//Курс доллара
+		/*var currency float64 = 0
+		for i := range itemsSofttronik.Body.Currency {
+			if itemsSofttronik.Body.Currency[i].ID == "USD" {
+				currency, err = strconv.ParseFloat(itemsSofttronik.Body.Currency[i].Rate, 64)
+				if err != nil {
+					log.Printf("Ошибка при получении курса валют Софт-троник (updateRemainsMS): %s\n", err)
+					return err
 				}
+				break
 			}
 		}
+		if currency == 0 {
+			log.Printf("Ошибка при получении курса валют Софт-троник (updateRemainsMS): %s\n", err)
+			return err
+		}*/
 		//На увеличение остатков
 		acceptanceReq := skladTypes.Acceptance{
 			Organization: skladTypes.MetaMiddle{Meta: orgMeta},
@@ -465,9 +424,10 @@ func UpdateRemainsMS(ctx context.Context) error {
 			default:
 				//Данные МС
 				var itemMS skladTypes.Rows
+				var err1 error
 				itemMSRaw, err := cache.Cache.Get(item.MoySklad)
 				//! нужно отрефакторить
-				/*if err != nil {
+				if err != nil {
 					itemMS, err1 = skladReq.GetItem(item.MoySklad)
 					if err1 != nil || itemMS.Id == "" {
 						log.Printf("Ошибка при получении товара МС (updateRemainsMS) msCode = %s: %s\n", item.MoySklad, err)
@@ -489,32 +449,16 @@ func UpdateRemainsMS(ctx context.Context) error {
 							cache.Cache.Append(item.MoySklad, sItemMS)
 						}
 					}
-				}*/
-
-				if err != nil {
-					itemMS, err = GetItemAndCache(item.MoySklad)
-					if err != nil {
-						log.Printf("Ошибка при получении товара МС (updateRemainsMS) msCode = %s: %s\n", item.MoySklad, err)
-						continue
-					}
-				} else {
-					itemMS, err = cache.Deserialize[skladTypes.Rows](itemMSRaw)
-					if err != nil {
-						cache.Cache.Delete(item.MoySklad)
-						itemMS, err = GetItemAndCache(item.MoySklad)
-						if err != nil {
-							log.Printf("Ошибка при получении товара МС (updateRemainsMS) msCode = %s: %s\n", item.MoySklad, err)
-							continue
-						}
-					}
 				}
 
-				itemRemainsMerlion, exists := MerlionItemsAvail[item.Service]
-				if !exists {
-					log.Printf("Ошибка при получении остатков с мерлиона, запись не найдена (updateRemainsMS) merlionCode = %s\n", item.Service)
+				itemRemainsSofttronik, ok := itemStockSofttronik[item.Manufacturer]
+				if !ok {
+					//itemRemainsSofttronik, err = softtronikReq.GetItemsByItemIdFormatted(item.Service, token)
+					//if err != nil {
+					log.Printf("Ошибка при получении остатков с Софт-троника (updateRemainsMS) softtronikCode = %s\n", item.Service)
 					continue
+					//}
 				}
-
 				if itemMS.IsSerialTrackable {
 					log.Printf("Товар с серийным учетом в приемку/списание не попал (updateRemainsMS) msCode = %s isSerialTrackable = %t\n", item.MoySklad, itemMS.IsSerialTrackable)
 					continue
@@ -531,22 +475,24 @@ func UpdateRemainsMS(ctx context.Context) error {
 					addition = -itemRemainsMS
 					itemRemainsMS = 0
 				}*/
-				if itemRemainsMS > itemRemainsMerlion.AvailableClient_MSK {
+				if itemRemainsMS > itemRemainsSofttronik.Stocks {
 					woffList = append(woffList, skladTypes.PositionsAdd{
-						Quantity:   itemRemainsMS - itemRemainsMerlion.AvailableClient_MSK,
+						Quantity:   itemRemainsMS - itemRemainsSofttronik.Stocks,
 						Assortment: skladTypes.MetaMiddle{Meta: itemMS.Meta},
 					})
-				} else if itemRemainsMS < itemRemainsMerlion.AvailableClient_MSK {
+					//fmt.Printf("%s - %s\n", item.Service, item.MoySklad)
+				} else if itemRemainsMS < itemRemainsSofttronik.Stocks {
+					rub_price := itemRemainsSofttronik.Price
+					half_rub_price := int(math.Ceil(rub_price * 100))
 					acceptanceList = append(acceptanceList, skladTypes.PositionsAdd{
-						Quantity:   itemRemainsMerlion.AvailableClient_MSK - itemRemainsMS, //+ addition
+						Quantity:   itemRemainsSofttronik.Stocks - itemRemainsMS, //+ addition
 						Assortment: skladTypes.MetaMiddle{Meta: itemMS.Meta},
-						Price:      itemRemainsMerlion.PriceClientRUB_MSK * 100,
+						Price:      float32(half_rub_price),
 					})
 				}
 			}
 			time.Sleep(time.Millisecond * 150)
 		}
-
 		if len(acceptanceList) != 0 {
 			acceptanceReq.Positions = acceptanceList
 			fmt.Printf("Позиций в приемке (updateRemainsMS): %d\n", len(acceptanceList))
@@ -555,7 +501,6 @@ func UpdateRemainsMS(ctx context.Context) error {
 				log.Printf("Ошибка при создании приемки (updateRemainsMS): %s\n", err)
 			}
 		}
-
 		if len(woffList) != 0 {
 			woffReq.Positions = woffList
 			fmt.Printf("Позиций в списании (updateRemainsMS): %d\n", len(woffList))
@@ -564,7 +509,6 @@ func UpdateRemainsMS(ctx context.Context) error {
 				log.Printf("Ошибка при создании списания (updateRemainsMS): %s\n", err)
 			}
 		}
-
 		fmt.Println("Закончил обновлять остатки на мс")
 		return nil
 	}

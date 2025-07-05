@@ -17,6 +17,11 @@ const (
 	NetlabOrgEnv      = "NETLAB_ORGANIZATION"
 	NetlabSkladEnv    = "NETLAB_SKLAD"
 
+	SofttronikContractorKeyEnv = "SOFTTRONIK_CONTRACTOR_KEY"
+	SofttronikContractKeyEnv   = "SOFTTRONIK_CONTRACT_KEY"
+	SofttronikOrgEnv           = "SOFTTRONIK_ORGANIZATION"
+	SofttronikSkladEnv         = "SOFTTRONIK_SKLAD"
+
 	SkladTokenEnv   = "MOY_SKLAD_TOKEN"
 	CatSkladNameEnv = "CATALOG"
 )
@@ -31,6 +36,11 @@ type ShareData struct {
 	netlabOrg      string
 	netlabSklad    string
 
+	softtronikContractor  string
+	softtronikContractKey string
+	softtronikOrg         string
+	softtronikSklad       string
+
 	skladToken   string
 	catSkladName string
 }
@@ -44,6 +54,11 @@ func (sd *ShareData) SetData(data map[string]string) {
 	sd.netlabPassword = data[NetlabPasswordEnv]
 	sd.netlabOrg = data[NetlabOrgEnv]
 	sd.netlabSklad = data[NetlabSkladEnv]
+
+	sd.softtronikContractor = data[SofttronikContractorKeyEnv]
+	sd.softtronikContractKey = data[SofttronikContractKeyEnv]
+	sd.softtronikOrg = data[SofttronikOrgEnv]
+	sd.softtronikSklad = data[SofttronikSkladEnv]
 
 	sd.skladToken = data[SkladTokenEnv]
 	sd.catSkladName = data[CatSkladNameEnv]
@@ -73,6 +88,23 @@ func (sd *ShareData) GetNetlabOrg() string {
 
 func (sd *ShareData) GetNetlabSklad() string {
 	return sd.netlabSklad
+}
+
+// Softtronik
+func (sd *ShareData) GetSofttronikContractor() string {
+	return sd.softtronikContractor
+}
+
+func (sd *ShareData) GetSofttronikContractKey() string {
+	return sd.softtronikContractKey
+}
+
+func (sd *ShareData) GetSofttronikOrg() string {
+	return sd.softtronikOrg
+}
+
+func (sd *ShareData) GetSofttronikSklad() string {
+	return sd.softtronikSklad
 }
 
 // MS
