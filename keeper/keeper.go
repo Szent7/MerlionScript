@@ -5,7 +5,6 @@ import (
 )
 
 var K ShareData
-var MerlionMainURL = "https://api.merlion.com/rl/mlservice3"
 
 const (
 	MerlionCredentialsEnv = "MERLION_CREDENTIALS"

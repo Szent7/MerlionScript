@@ -1,4 +1,4 @@
-package netlab
+package types
 
 const (
 	TokenUrl = "http://services.netlab.ru/rest/authentication/token.json?username=%s&password=%s"

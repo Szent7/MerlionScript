@@ -1,4 +1,4 @@
-package softtronik
+package types
 
 type CategoryItem struct {
 	Name        string `json:"Name"`

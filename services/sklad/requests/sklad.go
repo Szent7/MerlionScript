@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strings"
 )
 
 func CreateItem(product skladTypes.CreateItem) (rest.Response, error) {
@@ -165,23 +164,4 @@ func DecreaseItemsAvail(request *skladTypes.Acceptance) error {
 		return err
 	}
 	return nil
-}
-
-// Сравнение артикула в названии
-func СontainsSubstring(s string, substr string) bool {
-	n := len(substr)
-	if n == 0 || s == "" || n > len(s) {
-		return false
-	}
-
-	for i := 0; i <= len(s)-n; i++ {
-		if strings.HasPrefix(s[i:], substr) {
-			// Проверяем, что после подстроки идет либо пробел, либо конец строки
-			if i+n == len(s) || s[i+n] == ' ' {
-				return true
-			}
-		}
-	}
-
-	return false
 }

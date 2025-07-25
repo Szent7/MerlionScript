@@ -1,4 +1,4 @@
-package sklad
+package types
 
 import (
 	"time"
@@ -54,7 +54,7 @@ type CreateItem struct {
 }
 
 type UploadImage struct {
-	FileName string `json:"filename"`
+	Filename string `json:"filename"`
 	Content  string `json:"content"`
 }
 

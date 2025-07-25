@@ -1,11 +1,14 @@
 package main
 
 import (
-	"MerlionScript/cache"
 	"MerlionScript/controller"
 	"MerlionScript/keeper"
+	"MerlionScript/services/common"
+	"MerlionScript/services/common/initializer"
+	"MerlionScript/utils/cache"
 	csvInstance "MerlionScript/utils/csv"
 	"MerlionScript/utils/db"
+	"MerlionScript/utils/db/typesDB"
 	"context"
 	"fmt"
 	"log"
@@ -19,15 +22,19 @@ import (
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
-	dbInstance, err := db.GetDBInstance()
+
+	initializer.InitServices()
+
+	dbInstance, err := db.GetDB(typesDB.PathDB)
 	defer db.CloseDB()
 	if err != nil {
 		log.Fatalf("Ошибка при создании экземпляра базы данных: %s", err)
 	}
-	err = dbInstance.Init()
+	err = dbInstance.Init(common.GetTableNames())
 	if err != nil {
 		log.Fatalf("Ошибка при инициализации базы данных: %s", err)
 	}
+
 	err = cache.InitCache(ctx)
 	if err != nil {
 		log.Fatalf("Ошибка при инициализации кэша: %s", err)

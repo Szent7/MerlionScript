@@ -1,4 +1,4 @@
-package netlab
+package types
 
 import "encoding/xml"
 

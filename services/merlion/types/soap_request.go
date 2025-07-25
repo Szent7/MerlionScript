@@ -1,15 +1,6 @@
-package soapTypes
+package types
 
 import "encoding/xml"
-
-const (
-	GetCatalogUrl     = "https://api.merlion.com/rl/mlservice3#getCatalog"
-	GetItemsUrl       = "https://api.merlion.com/rl/mlservice3#getItems"
-	GetItemsImagesUrl = "https://api.merlion.com/rl/mlservice3#getItemsImages"
-	GetItemsAvailUrl  = "https://api.merlion.com/rl/mlservice3#getItemsAvail"
-
-	DownloadImageUrl = "http://img.merlion.ru/items"
-)
 
 type ItemMenuReq struct {
 	XMLName xml.Name `xml:"getCatalog"`

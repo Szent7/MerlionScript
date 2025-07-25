@@ -1,4 +1,4 @@
-package netlab
+package types
 
 type TokenMessage struct {
 	TokenResponse TokenResponse `json:"tokenResponse"`

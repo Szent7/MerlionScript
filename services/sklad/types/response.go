@@ -1,4 +1,4 @@
-package sklad
+package types
 
 type SearchItem struct {
 	Rows []Rows `json:"rows"`

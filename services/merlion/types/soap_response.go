@@ -1,4 +1,4 @@
-package soapTypes
+package types
 
 import "encoding/xml"
 

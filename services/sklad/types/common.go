@@ -1,4 +1,4 @@
-package sklad
+package types
 
 const (
 	ItemUrl         = "https://api.moysklad.ru/api/remap/1.2/entity/product"

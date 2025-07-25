@@ -1,4 +1,4 @@
-package softtronik
+package types
 
 const (
 	CategoryUrl = "https://api.soft-tronik.ru/API/hs/Products/GetCommodityGroupsList/%s"
