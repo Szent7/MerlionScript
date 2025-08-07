@@ -1,17 +1,14 @@
 package common
 
-import (
-	"context"
-)
-
 type ServiceInfo struct {
-	DBTableName string
-	Controller  func(context.Context)
+	DBTableName     string
+	ServiceInstance Service
 }
 
-//K - ServiceName
-//V - ServiceInfo
-var RegisteredServices map[string]ServiceInfo
+// K - ServiceName
+// V - ServiceInfo
+var RegisteredServices map[string]ServiceInfo = make(map[string]ServiceInfo)
+var MainERP ERPSystem
 
 func GetTableNames() []string {
 	if len(RegisteredServices) == 0 {
@@ -23,19 +20,3 @@ func GetTableNames() []string {
 	}
 	return tableNames
 }
-
-/*
-var Controllers []func(context.Context) = []func(context.Context){
-	merlion.Controller,
-	netlab.Controller,
-	softtronik.Controller,
-}
-
-//Название сервиса : Название таблицы БД
-var ServicesDec map[string]string = map[string]string{
-	"ownIDs":     "codes_ids",
-	"merlion":    "codes_merlion",
-	"netlab":     "codes_netlab",
-	"softtronik": "codes_softtronik",
-}
-*/

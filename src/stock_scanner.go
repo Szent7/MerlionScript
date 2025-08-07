@@ -3,7 +3,7 @@ package src
 import (
 	"MerlionScript/services/common"
 	skladTypes "MerlionScript/services/sklad/types"
-	"MerlionScript/utils/db"
+	"MerlionScript/utils/db/interfaceDB"
 	"context"
 	"fmt"
 	"log"
@@ -11,33 +11,33 @@ import (
 )
 
 // Обновляем остатки в ERP
-func UpdateRemainsERP(ctx context.Context, dbInstance *db.DB, service common.Service, erpSystem common.ERPSystem) error {
+func UpdateRemainsERP(ctx context.Context, dbInstance interfaceDB.DB, service common.Service, erpSystem common.ERPSystem) error {
 	var ServiceName string = service.GetSystemName()
 	var DBTableName string = service.GetDBTableName()
-	//Мета организации ERP
-	orgMeta, err := erpSystem.GetOrgMeta()
-	if err != nil {
-		log.Printf("%s (UpdateRemainsERP): ошибка при получении метаданных организации | err = %s\n", ServiceName, err)
-		return err
-	}
-	//Мета склада ERP
-	storeMeta, err := erpSystem.GetStoreMeta()
-	if err != nil || storeMeta.Href == "" {
-		log.Printf("%s (UpdateRemainsERP): ошибка при получении метаданных склада | err = %s\n", ServiceName, err)
-		return err
-	}
-	//ID склада ERP
-	storeUUID, err := erpSystem.GetStoreUUID()
-	if err != nil || storeUUID == "" {
-		log.Printf("%s (UpdateRemainsERP): ошибка при получении UUID склада | err = %s\n", ServiceName, err)
-		return err
-	}
 	select {
 	case <-ctx.Done():
 		fmt.Printf("%s (UpdateRemainsERP): работу закончил из-за контекста\n", ServiceName)
 		return nil
 	default:
 		fmt.Printf("%s: начал обновлять остатки\n", ServiceName)
+		//Мета организации ERP
+		orgMeta, err := erpSystem.GetOrgMeta(service.GetOrgName())
+		if err != nil || orgMeta.Href == "" {
+			log.Printf("%s (UpdateRemainsERP): ошибка при получении метаданных организации | err = %s\n", ServiceName, err)
+			return err
+		}
+		//Мета склада ERP
+		storeMeta, err := erpSystem.GetStoreMeta(service.GetStoreName())
+		if err != nil || storeMeta.Href == "" {
+			log.Printf("%s (UpdateRemainsERP): ошибка при получении метаданных склада | err = %s\n", ServiceName, err)
+			return err
+		}
+		//ID склада ERP
+		storeUUID, err := erpSystem.GetStoreUUID(service.GetStoreName())
+		if err != nil || storeUUID == "" {
+			log.Printf("%s (UpdateRemainsERP): ошибка при получении UUID склада | err = %s\n", ServiceName, err)
+			return err
+		}
 		//Записи из БД
 		items, err := dbInstance.GetCodesFilledMS(DBTableName)
 		if err != nil || items == nil {
@@ -45,7 +45,7 @@ func UpdateRemainsERP(ctx context.Context, dbInstance *db.DB, service common.Ser
 			return err
 		}
 		//Остатки с сервиса
-		itemsService, err := service.GetStocksList()
+		itemsService, err := service.GetStocksList(ctx, dbInstance)
 		if err != nil || itemsService == nil {
 			log.Printf("%s (UpdateRemainsERP): ошибка при получении записей из сервиса | err = %s\n", ServiceName, err)
 			return err
@@ -76,7 +76,7 @@ func UpdateRemainsERP(ctx context.Context, dbInstance *db.DB, service common.Ser
 				return nil
 			default:
 				//Запись ERP
-				itemERP, err := erpSystem.GetItemAvails(item.Codes.MoySkladCode)
+				itemERP, err := erpSystem.GetItemAvails(item.Codes.MoySkladCode, storeUUID)
 				if err != nil {
 					log.Printf("%s (UpdateRemainsERP): ошибка при получении записей из ERP | err = %s\n", ServiceName, err)
 					return err
@@ -88,7 +88,7 @@ func UpdateRemainsERP(ctx context.Context, dbInstance *db.DB, service common.Ser
 
 				itemService, exists := (*itemsService)[item.Service.ServiceCode]
 				if !exists {
-					log.Printf("%s (UpdateRemainsERP): ошибка при получении остатков, запись не найдена | serviceCode = %s\n", ServiceName, item.Service)
+					log.Printf("%s (UpdateRemainsERP): ошибка при получении остатков, запись не найдена или данных по остаткам нет | serviceCode = %s\n", ServiceName, item.Service.ServiceCode)
 					continue
 				}
 
@@ -101,7 +101,7 @@ func UpdateRemainsERP(ctx context.Context, dbInstance *db.DB, service common.Ser
 					acceptanceList = append(acceptanceList, skladTypes.PositionsAdd{
 						Quantity:   itemService.Stock - itemERP.Stock,
 						Assortment: skladTypes.MetaMiddle{Meta: itemERP.ItemMeta},
-						Price:      itemService.Price * 100,
+						Price:      itemService.Price,
 					})
 				}
 			}

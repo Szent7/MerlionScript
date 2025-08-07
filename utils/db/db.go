@@ -120,3 +120,9 @@ func (instance *DB) DeleteCodesRecord(id int, tableName string) error {
 	_, err := instance.Exec(query, id)
 	return err
 }
+
+func GetFormatID(counter int64) string {
+	newNumPart := counter
+	newID := fmt.Sprintf("I%05d", newNumPart)
+	return newID
+}

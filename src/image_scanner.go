@@ -3,7 +3,7 @@ package src
 import (
 	"MerlionScript/services/common"
 	skladTypes "MerlionScript/services/sklad/types"
-	"MerlionScript/utils/db"
+	"MerlionScript/utils/db/interfaceDB"
 	"MerlionScript/utils/rest"
 	"context"
 	"encoding/base64"
@@ -15,7 +15,7 @@ import (
 // Проверка на существование картинок
 // Вытягивание картинок из сервиса
 // Заливка картинок в ERP и обновление записи
-func UploadAllImages(ctx context.Context, dbInstance *db.DB, service common.Service, erpSystem common.ERPSystem) error {
+func UploadAllImages(ctx context.Context, dbInstance interfaceDB.DB, service common.Service, erpSystem common.ERPSystem) error {
 	var ServiceName string = service.GetSystemName()
 	var DBTableName string = service.GetDBTableName()
 	select {
@@ -26,7 +26,7 @@ func UploadAllImages(ctx context.Context, dbInstance *db.DB, service common.Serv
 		fmt.Printf("%s: начал обновлять изображения\n", ServiceName)
 		//Записи из БД
 		items, err := dbInstance.GetCodesFilledMSNoImage(DBTableName)
-		if err != nil {
+		if err != nil || items == nil {
 			log.Printf("%s (UploadAllImages): ошибка при получении записей из БД | err = %s\n", ServiceName, err)
 			return err
 		}
@@ -53,15 +53,15 @@ func UploadAllImages(ctx context.Context, dbInstance *db.DB, service common.Serv
 				if len(erpImages.Rows) == 10 { //Если в ERP уже есть 10 картинок
 					item.Service.TryUploadImage = 1
 					if err = dbInstance.UpdateService(item.Service, DBTableName); err != nil {
-						log.Printf("%s (UploadAllImages): ошибка при изменении записи в БД | serviceCode = %s: %s\n", ServiceName, item.Service, err)
+						log.Printf("%s (UploadAllImages): ошибка при изменении записи в БД | serviceCode = %s; err = %s\n", ServiceName, item.Service.ServiceCode, err)
 					}
 					continue
 				}
 				//Если изображений нет на МС, то заливаем новые из сервиса
 				//Вытягиваем изображения из сервиса
-				serviceImages, err := service.GetImagesList(item.Service.ServiceCode)
-				if err != nil {
-					log.Printf("%s (UploadAllImages): ошибка при получении списка изображений из сервиса | article = %s; err = %s\n", ServiceName, item.Codes.Manufacturer, err)
+				serviceImages, err := service.GetImagesList(ctx, item.Service.ServiceCode)
+				if err != nil || serviceImages == nil {
+					log.Printf("%s (UploadAllImages): ошибка при получении списка изображений из сервиса | article = %s; err = %s\n", ServiceName, item.Codes.Article, err)
 					continue
 				}
 				uploadedImages := 0
@@ -79,7 +79,7 @@ func UploadAllImages(ctx context.Context, dbInstance *db.DB, service common.Serv
 					//Загружаем изображение в ERP
 					err = erpSystem.UploadImage(newImage, erpItemID)
 					if err != nil {
-						log.Printf("%s (UploadAllImages): ошибка при загрузке изображения в ERP | serviceCode = %s; err = %s\n", ServiceName, item.Service, err)
+						log.Printf("%s (UploadAllImages): ошибка при загрузке изображения в ERP | serviceCode = %s; err = %s\n", ServiceName, item.Service.ServiceCode, err)
 						continue
 					}
 					uploadedImages++
@@ -89,7 +89,7 @@ func UploadAllImages(ctx context.Context, dbInstance *db.DB, service common.Serv
 				if uploadedImages > 0 || len(*serviceImages) == 0 {
 					item.Service.TryUploadImage = 1
 					if err = dbInstance.UpdateService(item.Service, DBTableName); err != nil {
-						log.Printf("%s (UploadAllImages): ошибка при изменении записи в БД | serviceCode = %s: %s\n", ServiceName, item.Service, err)
+						log.Printf("%s (UploadAllImages): ошибка при изменении записи в БД | serviceCode = %s; err = %s\n", ServiceName, item.Service.ServiceCode, err)
 						continue
 					}
 				}

@@ -2,13 +2,13 @@ package requests
 
 import (
 	"MerlionScript/keeper"
-	netlabTypes "MerlionScript/types/restTypes/netlab"
+	netlabTypes "MerlionScript/services/netlab/types"
 	"MerlionScript/utils/rest"
 	"encoding/json"
 	"fmt"
 )
 
-func GetTempToken() (string, error) {
+func GetNewToken() (string, error) {
 	netlabLogin, netlabPassword := keeper.K.GetCredentialsNetlab()
 	url := fmt.Sprintf(netlabTypes.TokenUrl, netlabLogin, netlabPassword)
 

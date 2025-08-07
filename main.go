@@ -6,7 +6,6 @@ import (
 	"MerlionScript/services/common"
 	"MerlionScript/services/common/initializer"
 	"MerlionScript/utils/cache"
-	csvInstance "MerlionScript/utils/csv"
 	"MerlionScript/utils/db"
 	"MerlionScript/utils/db/typesDB"
 	"context"
@@ -22,6 +21,8 @@ import (
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	importENV()
 
 	initializer.InitServices()
 
@@ -39,8 +40,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Ошибка при инициализации кэша: %s", err)
 	}
-	importENV()
-	importCSV()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
@@ -48,7 +47,7 @@ func main() {
 
 	fmt.Println("Боже, Царя храни!")
 	wg.Add(1)
-	go controller.StartController(ctx, &wg)
+	go controller.StartController(ctx, &wg, dbInstance)
 
 	select {
 	case <-sigCh:
@@ -86,6 +85,11 @@ func importENV() {
 	data[keeper.SofttronikOrgEnv] = os.Getenv(keeper.SofttronikOrgEnv)
 	data[keeper.SofttronikSkladEnv] = os.Getenv(keeper.SofttronikSkladEnv)
 
+	data[keeper.ElektronmirIDEnv] = os.Getenv(keeper.ElektronmirIDEnv)
+	data[keeper.ElektronmirSecretEnv] = os.Getenv(keeper.ElektronmirSecretEnv)
+	data[keeper.ElektronmirOrgEnv] = os.Getenv(keeper.ElektronmirOrgEnv)
+	data[keeper.ElektronmirSkladOneEnv] = os.Getenv(keeper.ElektronmirSkladOneEnv)
+
 	data[keeper.SkladTokenEnv] = os.Getenv(keeper.SkladTokenEnv)
 	data[keeper.CatSkladNameEnv] = os.Getenv(keeper.CatSkladNameEnv)
 
@@ -98,19 +102,19 @@ func importENV() {
 	keeper.K.SetData(data)
 }
 
-func importCSV() {
-	csv, err := csvInstance.GetCSVInstance()
-	if err != nil {
-		log.Printf("Ошибка при открытии codes.csv: %s", err)
-		return
-	}
-	if csv == nil {
-		fmt.Println("Файл для импорта не обнаружен (codes.csv)")
-		return
-	}
-	err = csv.ImportCodes()
-	if err != nil {
-		log.Printf("Ошибка при импорте codes.csv: %s", err)
-	}
-	csvInstance.CloseCSV()
-}
+// func importCSV() {
+// 	csv, err := csvInstance.GetCSVInstance()
+// 	if err != nil {
+// 		log.Printf("Ошибка при открытии codes.csv: %s", err)
+// 		return
+// 	}
+// 	if csv == nil {
+// 		fmt.Println("Файл для импорта не обнаружен (codes.csv)")
+// 		return
+// 	}
+// 	err = csv.ImportCodes()
+// 	if err != nil {
+// 		log.Printf("Ошибка при импорте codes.csv: %s", err)
+// 	}
+// 	csvInstance.CloseCSV()
+// }

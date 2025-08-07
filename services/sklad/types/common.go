@@ -1,6 +1,9 @@
 package types
 
 const (
+	ServiceName   = "sklad"
+	ServiceDBName = "codes_ids"
+
 	ItemUrl         = "https://api.moysklad.ru/api/remap/1.2/entity/product"
 	GroupUrl        = "https://api.moysklad.ru/api/remap/1.2/entity/productfolder"
 	StoreUrl        = "https://api.moysklad.ru/api/remap/1.2/entity/store"

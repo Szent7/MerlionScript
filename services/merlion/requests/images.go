@@ -1,8 +1,7 @@
 package requests
 
 import (
-	"MerlionScript/keeper"
-	merlionTypes "MerlionScript/types/soapTypes/merlion"
+	merlionTypes "MerlionScript/services/merlion/types"
 	"MerlionScript/utils/soap"
 	"encoding/xml"
 	"fmt"
@@ -15,7 +14,7 @@ func getImagesByItemId(itemId string) ([]merlionTypes.ItemImage, error) {
 	req := merlionTypes.ItemImageReq{
 		Item_id: merlionTypes.ItemId{Item: []string{itemId}},
 	}
-	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, merlionTypes.GetItemsImagesUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(merlionTypes.MerlionMainURL, merlionTypes.GetItemsImagesUrl, req)
 	if err != nil {
 		log.Printf("Ошибка при SOAP-запросе (getImagesByItemId): %s\n", err)
 		return nil, err

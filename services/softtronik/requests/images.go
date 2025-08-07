@@ -2,28 +2,28 @@ package requests
 
 import (
 	"MerlionScript/keeper"
-	softtronikTypesRest "MerlionScript/types/restTypes/softtronik"
+	softtronikTypes "MerlionScript/services/softtronik/types"
 	"MerlionScript/utils/rest"
 	"encoding/json"
 	"fmt"
 )
 
-func getItemsImages(itemCode string) (softtronikTypesRest.ImageItem, error) {
-	url := fmt.Sprintf(softtronikTypesRest.ImageUrl, keeper.K.GetSofttronikContractor(), itemCode)
+func getItemsImages(itemCode string) (softtronikTypes.ImageItem, error) {
+	url := fmt.Sprintf(softtronikTypes.ImageUrl, keeper.K.GetSofttronikContractor(), itemCode)
 
 	response, err := rest.CreateRequest("GET", url, nil, "")
 	if err != nil {
-		return softtronikTypesRest.ImageItem{}, err
+		return softtronikTypes.ImageItem{}, err
 	}
 	if response.StatusCode != 200 {
 		fmt.Println(response.StatusCode)
 		fmt.Println(string(response.Body))
-		return softtronikTypesRest.ImageItem{}, err
+		return softtronikTypes.ImageItem{}, err
 	}
 
-	var fileList softtronikTypesRest.ImageItem
+	var fileList softtronikTypes.ImageItem
 	if err := json.Unmarshal(response.Body, &fileList); err != nil {
-		return softtronikTypesRest.ImageItem{}, fmt.Errorf("ошибка при декодировании item (getitemsimages): %s", err.Error())
+		return softtronikTypes.ImageItem{}, fmt.Errorf("ошибка при декодировании item (getitemsimages): %s", err.Error())
 	}
 
 	return fileList, nil

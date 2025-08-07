@@ -37,16 +37,17 @@ func (instance *DB) InsertCodesIDs(record typesDB.CodesIDs) (bool, error) {
 }
 
 func (instance *DB) GetCodesIDs(article string) (typesDB.CodesIDs, error) {
-	query := fmt.Sprintf("SELECT (id, ms_own_id, moy_sklad, article, manufacturer) FROM %s WHERE article = ?", typesDB.IDsTable)
-	record := typesDB.CodesIDs{}
+	query := fmt.Sprintf("SELECT id, ms_own_id, moy_sklad, manufacturer FROM %s WHERE article = ?", typesDB.IDsTable)
+	record := typesDB.CodesIDs{Article: article}
 
-	err := instance.QueryRow(query, article).Scan(&record.Id, &record.MsOwnId, &record.MoySkladCode, &record.Article, &record.Manufacturer)
+	err := instance.QueryRow(query, article).Scan(&record.Id, &record.MsOwnId, &record.MoySkladCode, &record.Manufacturer)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return typesDB.CodesIDs{}, nil
 		}
 		return typesDB.CodesIDs{}, err
 	}
+
 	return record, nil
 }
 
@@ -97,7 +98,7 @@ func (instance *DB) GetCodesFilledMS(tableName string) (*[]typesDB.General, erro
 	SELECT %s.*, %s.*
 	FROM %s 
 	INNER JOIN %s ON %s.article = %s.article
-	WHERE %s.moy_sklad != '')`, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName, typesDB.IDsTable)
+	WHERE %s.moy_sklad != ''`, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName, typesDB.IDsTable)
 	rows, err := instance.Query(query)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -122,7 +123,7 @@ func (instance *DB) GetCodesFilledMSNoImage(tableName string) (*[]typesDB.Genera
 	SELECT %s.*, %s.*
 	FROM %s 
 	INNER JOIN %s ON %s.article = %s.article
-	WHERE %s.moy_sklad != '' AND %s.try_upload_imgage = 0)`, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName)
+	WHERE %s.moy_sklad != '' AND %s.try_upload_image = 0`, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName, typesDB.IDsTable, tableName)
 	rows, err := instance.Query(query)
 	if err != nil {
 		if err == sql.ErrNoRows {

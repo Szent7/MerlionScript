@@ -1,8 +1,7 @@
 package requests
 
 import (
-	netlabTypesRest "MerlionScript/types/restTypes/netlab"
-	netlabTypesSoap "MerlionScript/types/soapTypes/netlab"
+	netlabTypes "MerlionScript/services/netlab/types"
 	"MerlionScript/utils/rest"
 	"encoding/xml"
 	"fmt"
@@ -10,58 +9,24 @@ import (
 	"strings"
 )
 
-/*
-func GetAllCatalogCodes(token string) ([]string, error) {
-	url := fmt.Sprintf(netlabTypes.CatalogUrl, token)
+func GetAllCategoryCodes(token string) ([]netlabTypes.ItemCategory, error) {
+	url := fmt.Sprintf(netlabTypes.CategoryUrl, netlabTypes.CatalogName, token)
 
 	decoder, err := rest.CreateRequestXML("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var codes []string
-	for {
-		token, err := decoder.Token()
-		if err != nil {
-			break
-		}
-		var item merlionTypes.ItemMenu
-		switch start := token.(type) {
-		case xml.StartElement:
-			//fmt.Println("Xml tag:", start.Name.Local)
-			if start.Name.Local == "item" {
-				err := decoder.DecodeElement(&item, &start)
-				if err != nil {
-					log.Println("ошибка при декодировании item(getcatalog):", err)
-					break
-				}
-				codes = append(codes, item.ID)
-			}
-		}
-	}
-	return codes, nil
-}
-*/
-
-func GetAllCategoryCodes(token string) ([]netlabTypesSoap.ItemCategory, error) {
-	url := fmt.Sprintf(netlabTypesRest.CategoryUrl, netlabTypesRest.CatalogName, token)
-
-	decoder, err := rest.CreateRequestXML("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var codes []netlabTypesSoap.ItemCategory
+	var codes []netlabTypes.ItemCategory
 
 	for {
 		token, err := decoder.Token()
 		if err != nil {
 			break
 		}
-		var item netlabTypesSoap.ItemCategory
+		var item netlabTypes.ItemCategory
 		switch start := token.(type) {
 		case xml.StartElement:
-			//fmt.Println("Xml tag:", start.Name.Local)
 			if start.Name.Local == "category" {
 				err := decoder.DecodeElement(&item, &start)
 				if err != nil {

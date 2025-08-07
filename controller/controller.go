@@ -2,18 +2,17 @@ package controller
 
 import (
 	"MerlionScript/services/common"
-	"MerlionScript/services/common/initializer"
+	"MerlionScript/utils/db"
 	"context"
 	"fmt"
 	"sync"
 	"time"
 )
 
-func StartController(ctx context.Context, wg *sync.WaitGroup) {
+func StartController(ctx context.Context, wg *sync.WaitGroup, dbInstance *db.DB) {
 	defer wg.Done()
 	var startHour int = 7
 	var endHour int = 19
-	initializer.InitServices()
 	if len(common.RegisteredServices) == 0 {
 		fmt.Println("Контроллеры сервисов не обнаружены")
 		return
@@ -52,37 +51,7 @@ func StartController(ctx context.Context, wg *sync.WaitGroup) {
 			fmt.Println("StartController работу закончил из-за контекста")
 			return
 		default:
-			for _, v := range common.RegisteredServices {
-				v.Controller(ctx)
-			}
+			ExecuteService(ctx, dbInstance)
 		}
 	}
 }
-
-/*
-func merlionController(ctx context.Context) {
-	merlion.CheckMerlionNewPositions(ctx)
-	merlion.CreateNewPositionsMS(ctx)
-	merlion.UpdateRemainsMS(ctx)
-	merlion.UploadAllImages(ctx)
-}
-
-func netlabController(ctx context.Context) {
-	token, err := netlabReq.GetTempToken()
-	if err != nil {
-		log.Printf("Ошибка при получении токена Netlab (netlabController): %s\n", err)
-		return
-	}
-	netlab.CheckNetlabNewPositions(ctx, token)
-	netlab.CreateNewPositionsMS(ctx, token)
-	netlab.UpdateRemainsMS(ctx, token)
-	netlab.UploadAllImages(ctx, token)
-}
-
-func softtronikController(ctx context.Context) {
-	softtronik.CheckSofttronikNewPositions(ctx)
-	softtronik.CreateNewPositionsMS(ctx)
-	softtronik.UpdateRemainsMS(ctx)
-	softtronik.UploadAllImages(ctx)
-}
-*/

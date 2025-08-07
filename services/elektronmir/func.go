@@ -1,16 +1,16 @@
-package netlab
+package elektronmir
 
 import (
-	netlabTypes "MerlionScript/services/netlab/types"
+	elektronmirTypes "MerlionScript/services/elektronmir/types"
 )
 
-func getGlobalItemsRecord(id string, GlobalItems []netlabTypes.ItemNetlab) (record netlabTypes.ItemNetlab, found bool) {
+func getGlobalItemsRecord(id int, GlobalItems []elektronmirTypes.Data) (record elektronmirTypes.Data, found bool) {
 	for i := range GlobalItems {
-		if GlobalItems[i].Id == id {
+		if GlobalItems[i].ID == id {
 			return GlobalItems[i], true
 		}
 	}
-	return netlabTypes.ItemNetlab{}, false
+	return elektronmirTypes.Data{}, false
 }
 
 func getExtensionFromContentType(contentType string) string {

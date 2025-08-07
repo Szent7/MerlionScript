@@ -1,7 +1,7 @@
 package requests
 
 import (
-	skladTypes "MerlionScript/types/restTypes/sklad"
+	skladTypes "MerlionScript/services/sklad/types"
 	"MerlionScript/utils/rest"
 	"bytes"
 	"encoding/json"

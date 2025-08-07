@@ -1,23 +1,23 @@
 package softtronik
 
 import (
-	softtronikTypesRest "MerlionScript/types/restTypes/softtronik"
+	softtronikTypes "MerlionScript/services/softtronik/types"
 	"strings"
 )
 
-func getGlobalItemsRecord(id string, GlobalItems []softtronikTypesRest.ProductItem) (record softtronikTypesRest.ProductItem, found bool) {
+func getGlobalItemsRecord(id string, GlobalItems []softtronikTypes.ProductItem) (record softtronikTypes.ProductItem, found bool) {
 	for i := range GlobalItems {
 		if GlobalItems[i].Code == id {
 			return GlobalItems[i], true
 		}
 	}
-	return softtronikTypesRest.ProductItem{}, false
+	return softtronikTypes.ProductItem{}, false
 }
 
-func getAvailsItemsRecords(SofttronikItems softtronikTypesRest.StocksItem) (itemAvails map[string]softtronikTypesRest.ItemStockPrice) {
-	itemAvails = make(map[string]softtronikTypesRest.ItemStockPrice, len(SofttronikItems.Body.ProductsDataWithPricesAndBalances))
+func getAvailsItemsRecords(SofttronikItems softtronikTypes.StocksItem) (itemAvails map[string]softtronikTypes.ItemStockPrice) {
+	itemAvails = make(map[string]softtronikTypes.ItemStockPrice, len(SofttronikItems.Body.ProductsDataWithPricesAndBalances))
 	for _, item := range SofttronikItems.Body.ProductsDataWithPricesAndBalances {
-		newItem := softtronikTypesRest.ItemStockPrice{
+		newItem := softtronikTypes.ItemStockPrice{
 			Stocks: 0,
 			Price:  0,
 		}

@@ -1,12 +1,6 @@
 package merlion
 
-import (
-	"MerlionScript/cache"
-	skladReq "MerlionScript/services/sklad/requests"
-	skladTypes "MerlionScript/types/restTypes/sklad"
-	"fmt"
-)
-
+/*
 func GetItemAndCache(code string) (skladTypes.Rows, error) {
 	itemMS, err := skladReq.GetItem(code)
 	if err != nil {
@@ -23,3 +17,4 @@ func GetItemAndCache(code string) (skladTypes.Rows, error) {
 
 	return itemMS, nil
 }
+*/

@@ -1,8 +1,7 @@
 package requests
 
 import (
-	"MerlionScript/keeper"
-	merlionTypes "MerlionScript/types/soapTypes/merlion"
+	merlionTypes "MerlionScript/services/merlion/types"
 	"MerlionScript/utils/soap"
 	"encoding/xml"
 	"fmt"
@@ -10,12 +9,11 @@ import (
 )
 
 func GetCatalog(catName string) (merlionTypes.ItemMenu, bool) {
-	//fmt.Println(base64.StdEncoding.EncodeToString([]byte(credentials)))
 	req := merlionTypes.ItemMenuReq{
 		Cat_id: "All",
 	}
-	//var res = make([]merlionTypes.ItemMenu, 100)
-	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, merlionTypes.GetCatalogUrl, req)
+
+	decoder, err := soap.SoapCallHandleResponse(merlionTypes.MerlionMainURL, merlionTypes.GetCatalogUrl, req)
 	if err != nil {
 		log.Fatalf("SoapCallHandleResponse error: %s", err)
 	}
@@ -27,14 +25,13 @@ func GetCatalog(catName string) (merlionTypes.ItemMenu, bool) {
 		var item merlionTypes.ItemMenu
 		switch start := token.(type) {
 		case xml.StartElement:
-			//fmt.Println("Xml tag:", start.Name.Local)
 			if start.Name.Local == "item" {
 				err := decoder.DecodeElement(&item, &start)
-				//fmt.Println(item)
+
 				if item.Description == catName {
 					return item, true
 				}
-				//res = append(res, item)
+
 				if err != nil {
 					fmt.Println("ошибка при декодировании item(getcatalog):", err)
 					break
@@ -49,7 +46,7 @@ func GetAllCatalogCodes() ([]string, error) {
 	req := merlionTypes.ItemMenuReq{
 		Cat_id: "Order",
 	}
-	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, merlionTypes.GetCatalogUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(merlionTypes.MerlionMainURL, merlionTypes.GetCatalogUrl, req)
 	if err != nil {
 		log.Printf("Ошибка при SOAP-запросе (GetAllCatalogCodes): %s\n", err)
 		return nil, err
@@ -78,12 +75,11 @@ func GetAllCatalogCodes() ([]string, error) {
 }
 
 func GetCatalogUniqueCodes() []string {
-	//fmt.Println(base64.StdEncoding.EncodeToString([]byte(credentials)))
 	req := merlionTypes.ItemMenuReq{
 		Cat_id: "All",
 	}
 
-	decoder, err := soap.SoapCallHandleResponse(keeper.MerlionMainURL, merlionTypes.GetCatalogUrl, req)
+	decoder, err := soap.SoapCallHandleResponse(merlionTypes.MerlionMainURL, merlionTypes.GetCatalogUrl, req)
 	if err != nil {
 		log.Fatalf("SoapCallHandleResponse error: %s", err)
 	}

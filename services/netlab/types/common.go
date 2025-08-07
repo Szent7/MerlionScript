@@ -1,6 +1,9 @@
 package types
 
 const (
+	ServiceName   = "netlab"
+	ServiceDBName = "codes_netlab"
+
 	TokenUrl = "http://services.netlab.ru/rest/authentication/token.json?username=%s&password=%s"
 	//CatalogUrl  = "http://services.netlab.ru/rest/catalogsZip/list.xml?oauth_token=%s"
 	CategoryUrl = "http://services.netlab.ru/rest/catalogsZip/%s.xml?oauth_token=%s"

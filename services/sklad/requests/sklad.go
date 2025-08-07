@@ -1,7 +1,8 @@
 package requests
 
 import (
-	skladTypes "MerlionScript/types/restTypes/sklad"
+	skladTypes "MerlionScript/services/sklad/types"
+	"MerlionScript/src"
 	"MerlionScript/utils/rest"
 	"bytes"
 	"encoding/json"
@@ -95,7 +96,7 @@ func GetStoreUUID(storeName string) (string, error) {
 	}
 
 	for i := range items.Rows {
-		if СontainsSubstring(items.Rows[i].Name, storeName) {
+		if src.СontainsSubstring(items.Rows[i].Name, storeName) {
 			return items.Rows[i].Id, nil
 		}
 		/*if strings.Contains(items.Rows[i].Name, storeName) {

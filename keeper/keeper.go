@@ -21,6 +21,11 @@ const (
 	SofttronikOrgEnv           = "SOFTTRONIK_ORGANIZATION"
 	SofttronikSkladEnv         = "SOFTTRONIK_SKLAD"
 
+	ElektronmirIDEnv       = "ELEKTRONMIR_ID"
+	ElektronmirSecretEnv   = "ELEKTRONMIR_SECRET"
+	ElektronmirOrgEnv      = "ELEKTRONMIR_ORGANIZATION"
+	ElektronmirSkladOneEnv = "ELEKTRONMIR_SKLAD_ONE"
+
 	SkladTokenEnv   = "MOY_SKLAD_TOKEN"
 	CatSkladNameEnv = "CATALOG"
 )
@@ -40,6 +45,11 @@ type ShareData struct {
 	softtronikOrg         string
 	softtronikSklad       string
 
+	elektronmirID       string
+	elektronmirSecret   string
+	elektronmirOrg      string
+	elektronmirSkladOne string
+
 	skladToken   string
 	catSkladName string
 }
@@ -58,6 +68,11 @@ func (sd *ShareData) SetData(data map[string]string) {
 	sd.softtronikContractKey = data[SofttronikContractKeyEnv]
 	sd.softtronikOrg = data[SofttronikOrgEnv]
 	sd.softtronikSklad = data[SofttronikSkladEnv]
+
+	sd.elektronmirID = data[ElektronmirIDEnv]
+	sd.elektronmirSecret = data[ElektronmirSecretEnv]
+	sd.elektronmirOrg = data[ElektronmirOrgEnv]
+	sd.elektronmirSkladOne = data[ElektronmirSkladOneEnv]
 
 	sd.skladToken = data[SkladTokenEnv]
 	sd.catSkladName = data[CatSkladNameEnv]
@@ -104,6 +119,23 @@ func (sd *ShareData) GetSofttronikOrg() string {
 
 func (sd *ShareData) GetSofttronikSklad() string {
 	return sd.softtronikSklad
+}
+
+// Elektronmir
+func (sd *ShareData) GetElektronmirID() string {
+	return sd.elektronmirID
+}
+
+func (sd *ShareData) GetElektronmirSecret() string {
+	return sd.elektronmirSecret
+}
+
+func (sd *ShareData) GetElektronmirOrg() string {
+	return sd.elektronmirOrg
+}
+
+func (sd *ShareData) GetElektronmirSkladOne() string {
+	return sd.elektronmirSkladOne
 }
 
 // MS

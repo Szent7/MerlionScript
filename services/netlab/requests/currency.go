@@ -1,8 +1,7 @@
 package requests
 
 import (
-	netlabTypesRest "MerlionScript/types/restTypes/netlab"
-	netlabTypesSoap "MerlionScript/types/soapTypes/netlab"
+	netlabTypes "MerlionScript/services/netlab/types"
 	"MerlionScript/utils/rest"
 	"encoding/xml"
 	"fmt"
@@ -10,7 +9,7 @@ import (
 )
 
 func GetCurrency(token string) (float64, error) {
-	url := fmt.Sprintf(netlabTypesRest.CurrencyUrl, token)
+	url := fmt.Sprintf(netlabTypes.CurrencyUrl, token)
 
 	decoder, err := rest.CreateRequestXML("GET", url, nil)
 	if err != nil {
@@ -18,8 +17,8 @@ func GetCurrency(token string) (float64, error) {
 	}
 
 	var currency float64 = 0
-	var item netlabTypesSoap.Property
-	var status netlabTypesSoap.Status
+	var item netlabTypes.Property
+	var status netlabTypes.Status
 
 	for {
 		token, err := decoder.Token()

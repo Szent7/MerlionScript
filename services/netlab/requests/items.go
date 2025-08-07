@@ -1,8 +1,7 @@
 package requests
 
 import (
-	netlabTypesRest "MerlionScript/types/restTypes/netlab"
-	netlabTypesSoap "MerlionScript/types/soapTypes/netlab"
+	netlabTypes "MerlionScript/services/netlab/types"
 	"MerlionScript/utils/rest"
 	"encoding/xml"
 	"fmt"
@@ -10,16 +9,16 @@ import (
 	"strconv"
 )
 
-func GetItemsByCatId(catId string, token string) ([]netlabTypesSoap.Item, error) {
-	url := fmt.Sprintf(netlabTypesRest.ItemUrl, netlabTypesRest.CatalogName, catId, token)
+func GetItemsByCatId(catId string, token string) ([]netlabTypes.Item, error) {
+	url := fmt.Sprintf(netlabTypes.ItemUrl, netlabTypes.CatalogName, catId, token)
 
 	decoder, err := rest.CreateRequestXML("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var item netlabTypesSoap.Item
-	var items []netlabTypesSoap.Item
+	var item netlabTypes.Item
+	var items []netlabTypes.Item
 
 	for {
 		token, err := decoder.Token()
@@ -28,11 +27,8 @@ func GetItemsByCatId(catId string, token string) ([]netlabTypesSoap.Item, error)
 		}
 		switch start := token.(type) {
 		case xml.StartElement:
-			//fmt.Println("Xml tag:", start.Name.Local)
 			if start.Name.Local == "goods" {
 				err := decoder.DecodeElement(&item, &start)
-				//fmt.Println(item)
-				//res = append(res, item)
 				if err != nil {
 					fmt.Println("Ошибка при декодировании item(GetItemsByCatId):", err)
 					break
@@ -45,16 +41,16 @@ func GetItemsByCatId(catId string, token string) ([]netlabTypesSoap.Item, error)
 	return items, nil
 }
 
-func GetItemsByItemId(itemId string, token string) ([]netlabTypesSoap.Item, error) {
-	url := fmt.Sprintf(netlabTypesRest.ItemIdUrl, itemId, token)
+func GetItemsByItemId(itemId string, token string) ([]netlabTypes.Item, error) {
+	url := fmt.Sprintf(netlabTypes.ItemIdUrl, itemId, token)
 
 	decoder, err := rest.CreateRequestXML("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var item netlabTypesSoap.Item
-	var items []netlabTypesSoap.Item
+	var item netlabTypes.Item
+	var items []netlabTypes.Item
 
 	for {
 		token, err := decoder.Token()
@@ -63,11 +59,8 @@ func GetItemsByItemId(itemId string, token string) ([]netlabTypesSoap.Item, erro
 		}
 		switch start := token.(type) {
 		case xml.StartElement:
-			//fmt.Println("Xml tag:", start.Name.Local)
 			if start.Name.Local == "goods" {
 				err := decoder.DecodeElement(&item, &start)
-				//fmt.Println(item)
-				//res = append(res, item)
 				if err != nil {
 					fmt.Println("Ошибка при декодировании item(GetItemsByCatId):", err)
 					break
@@ -80,15 +73,15 @@ func GetItemsByItemId(itemId string, token string) ([]netlabTypesSoap.Item, erro
 	return items, nil
 }
 
-func GetItemsByCatIdFormatted(catId string, token string) ([]netlabTypesSoap.ItemNetlab, error) {
+func GetItemsByCatIdFormatted(catId string, token string) ([]netlabTypes.ItemNetlab, error) {
 	rawItems, err := GetItemsByCatId(catId, token)
 	if err != nil {
 		return nil, err
 	}
 
-	var items = make([]netlabTypesSoap.ItemNetlab, 0, len(rawItems))
+	var items = make([]netlabTypes.ItemNetlab, 0, len(rawItems))
 	for i := range rawItems {
-		var item netlabTypesSoap.ItemNetlab
+		var item netlabTypes.ItemNetlab
 		for _, property := range rawItems[i].Properties.Property {
 			switch property.Name {
 			case "название":
@@ -103,22 +96,7 @@ func GetItemsByCatIdFormatted(catId string, token string) ([]netlabTypesSoap.Ite
 					log.Printf("Ошибка при парсинге значения (GetItemsByCatIdFormatted) %s : err = %s\n", property.Value, err.Error())
 					break
 				}
-				//remains += int(rawRemains)
 				item.Remains = int(rawRemains)
-			/*case "количество на Калужской":
-				rawRemains, err := strconv.ParseFloat(property.Value, 64)
-				if err != nil {
-					log.Printf("Ошибка при парсинге значения (GetItemsByCatIdFormatted) %s : err = %s\n", property.Value, err.Error())
-					break
-				}
-				remains += int(rawRemains)
-			case "количество на Курской":
-				rawRemains, err := strconv.ParseFloat(property.Value, 64)
-				if err != nil {
-					log.Printf("Ошибка при парсинге значения (GetItemsByCatIdFormatted) %s : err = %s\n", property.Value, err.Error())
-					break
-				}
-				remains += int(rawRemains)*/
 			case "цена по категории F":
 				rawPrice, err := strconv.ParseFloat(property.Value, 64)
 				if err != nil {
@@ -135,14 +113,14 @@ func GetItemsByCatIdFormatted(catId string, token string) ([]netlabTypesSoap.Ite
 	return items, nil
 }
 
-func GetItemsByItemIdFormatted(itemId string, token string) (netlabTypesSoap.ItemNetlab, error) {
+func GetItemsByItemIdFormatted(itemId string, token string) (netlabTypes.ItemNetlab, error) {
 	rawItems, err := GetItemsByItemId(itemId, token)
 	if err != nil {
-		return netlabTypesSoap.ItemNetlab{}, err
+		return netlabTypes.ItemNetlab{}, err
 	}
 
 	for i := range rawItems {
-		var item netlabTypesSoap.ItemNetlab
+		var item netlabTypes.ItemNetlab
 		for _, property := range rawItems[i].Properties.Property {
 			if item.Id == itemId {
 				switch property.Name {
@@ -158,22 +136,7 @@ func GetItemsByItemIdFormatted(itemId string, token string) (netlabTypesSoap.Ite
 						log.Printf("Ошибка при парсинге значения (GetItemsByCatIdFormatted) %s : err = %s\n", property.Value, err.Error())
 						break
 					}
-					//remains += int(rawRemains)
 					item.Remains = int(rawRemains)
-				/*case "количество на Калужской":
-					rawRemains, err := strconv.ParseFloat(property.Value, 64)
-					if err != nil {
-						log.Printf("Ошибка при парсинге значения (GetItemsByCatIdFormatted) %s : err = %s\n", property.Value, err.Error())
-						break
-					}
-					remains += int(rawRemains)
-				case "количество на Курской":
-					rawRemains, err := strconv.ParseFloat(property.Value, 64)
-					if err != nil {
-						log.Printf("Ошибка при парсинге значения (GetItemsByCatIdFormatted) %s : err = %s\n", property.Value, err.Error())
-						break
-					}
-					remains += int(rawRemains)*/
 				case "цена по категории F":
 					rawPrice, err := strconv.ParseFloat(property.Value, 64)
 					if err != nil {
@@ -188,5 +151,5 @@ func GetItemsByItemIdFormatted(itemId string, token string) (netlabTypesSoap.Ite
 		}
 	}
 
-	return netlabTypesSoap.ItemNetlab{}, nil
+	return netlabTypes.ItemNetlab{}, nil
 }

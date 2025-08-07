@@ -1,9 +1,10 @@
 package src
 
 import (
+	"MerlionScript/keeper"
 	"MerlionScript/services/common"
-	"MerlionScript/services/sklad"
 	"MerlionScript/utils/db"
+	"MerlionScript/utils/db/interfaceDB"
 	"MerlionScript/utils/db/typesDB"
 	"context"
 	"fmt"
@@ -13,26 +14,19 @@ import (
 )
 
 // Создаем отсутствующие позиции в ERP или создаем привязки
-func CreateNewPositionsERP(ctx context.Context, dbInstance *db.DB, service common.Service, erpSystem common.ERPSystem) error {
+func CreateNewPositionsERP(ctx context.Context, dbInstance interfaceDB.DB, service common.Service, erpSystem common.ERPSystem) error {
 	var ServiceName string = service.GetSystemName()
-	var DBTableName string = service.GetDBTableName()
-	catName := erpSystem.GetCatName()
-	catMeta, err := erpSystem.GetCatMeta()
-	if err != nil {
-		log.Printf("%s (CreateNewPositionsERP): ошибка при получении метаданных каталога | err = %s\n", ServiceName, err)
-		return err
-	}
-	Items, err := service.GetItemsList()
-	if err != nil {
-		return err
-	}
 	select {
 	case <-ctx.Done():
 		fmt.Printf("%s (CreateNewPositionsERP): работу закончил из-за контекста\n", ServiceName)
 		return nil
 	default:
 		fmt.Printf("%s: начал сверять новые позиции с мс\n", ServiceName)
-		//TODO Необходимо добавить парсинг последнего кода из базы мс, чтобы счетчик не задвоился
+		Items, err := service.GetItemsList(ctx, dbInstance)
+		if err != nil || Items == nil {
+			log.Printf("%s (CreateNewPositionsERP): ошибка при получении записей из сервиса | err = %s\n", ServiceName, err)
+			return err
+		}
 		counter, err := dbInstance.GetLastOwnIdMS()
 		if err != nil {
 			log.Printf("%s (CreateNewPositionsERP): ошибка при получении counter из БД | err = %s\n", ServiceName, err)
@@ -40,14 +34,17 @@ func CreateNewPositionsERP(ctx context.Context, dbInstance *db.DB, service commo
 		}
 		var createdItems int = 0
 		for i := range *Items {
+			if createdItems >= 10 {
+				break
+			}
 			select {
 			case <-ctx.Done():
 				return nil
 			default:
 				//Поиск по товарам МС
-				articleReplace := strings.Replace((*Items)[i].Article, " ", "+", -1)
+				articleReplace := strings.ReplaceAll((*Items)[i].Article, " ", "+")
 				erpItems, err := erpSystem.GetItemsByArticle(articleReplace)
-				if err != nil {
+				if err != nil || erpItems == nil {
 					log.Printf("%s (CreateNewPositionsERP): ошибка при получении записи из ERP | article = %s; err = %s\n", ServiceName, (*Items)[i].Article, err)
 					continue
 				}
@@ -59,10 +56,10 @@ func CreateNewPositionsERP(ctx context.Context, dbInstance *db.DB, service commo
 				}
 				//Если этого товара не существует на МС
 				if len(*erpItems) == 0 {
-					log.Printf("%s (CreateNewPositionsERP): полных соответствий не найдено (создаю новую позицию) | article = %s ", ServiceName, (*Items)[i].Article)
-					if sklad.CreateNewItemMS(&erpRecord, catName, catMeta, &counter, dbInstance, DBTableName) {
-						createdItems++
+					if err = createPosition(erpRecord, &counter, dbInstance, erpSystem, ServiceName, (*Items)[i]); err != nil {
+						continue
 					}
+					createdItems++
 				} else { //Если найдены совпадения/похожие
 					//Проверяем существование позиции на МС
 					foundedItem, err := CompareArticle(erpItems, &(*Items)[i])
@@ -82,9 +79,9 @@ func CreateNewPositionsERP(ctx context.Context, dbInstance *db.DB, service commo
 							log.Printf("%s (CreateNewPositionsERP): вероятное задвоение article = %s | соответствие на мс = %s\n", ServiceName, (*Items)[i].Article, foundedItem.Article)
 							continue
 						}*/
-						erpRecord.MoySklad = foundedItem.Article
+						erpRecord.MoySkladCode = foundedItem.Article
 						// Извлекаем counter из артикула
-						ownId, _ := db.ExtractCounterFromOwnID(erpRecord.MoySklad)
+						ownId, _ := db.ExtractCounterFromOwnID(erpRecord.MoySkladCode)
 						if ownId > 0 {
 							erpRecord.MsOwnId = ownId
 						}
@@ -92,10 +89,10 @@ func CreateNewPositionsERP(ctx context.Context, dbInstance *db.DB, service commo
 							log.Printf("%s (CreateNewPositionsERP): ошибка при изменении записи в БД | serviceCode = %s; err = %s\n", ServiceName, ServiceName, err)
 						}
 					} else { //Если совпадения не найдены
-						log.Printf("%s (CreateNewPositionsERP): полных соответствий не найдено (создаю новую позицию) | article = %s ", ServiceName, (*Items)[i].Article)
-						if sklad.CreateNewItemMS(&erpRecord, catName, catMeta, &counter, dbInstance, DBTableName) {
-							createdItems++
+						if err = createPosition(erpRecord, &counter, dbInstance, erpSystem, ServiceName, (*Items)[i]); err != nil {
+							continue
 						}
+						createdItems++
 					}
 				}
 			}
@@ -107,4 +104,18 @@ func CreateNewPositionsERP(ctx context.Context, dbInstance *db.DB, service commo
 	}
 }
 
-//!92 - нихуя не понятно
+func createPosition(erpRecord typesDB.CodesIDs, counter *int64, dbInstance interfaceDB.DB, erpSystem common.ERPSystem, ServiceName string, item common.ItemList) error {
+	log.Printf("%s (CreateNewPositionsERP): полных соответствий не найдено (создаю новую позицию) | article = %s ", ServiceName, item.Article)
+	newId := db.GetFormatID(*counter)
+	erpRecord.MoySkladCode = newId
+	if err := erpSystem.CreateItem(&erpRecord, newId, item.PositionName, keeper.K.GetSkladCat()); err != nil {
+		log.Printf("%s (CreateNewPositionsERP): ошибка при создании записи на МС | erpCode = %s; err = %s\n", ServiceName, erpRecord.MoySkladCode, err)
+		return err
+	}
+	*counter++
+	erpRecord.MsOwnId = *counter
+	if err := dbInstance.UpdateCodesIDs(erpRecord); err != nil {
+		log.Printf("%s (CreateNewPositionsERP): ошибка при изменении записи в БД | erpCode = %s; err = %s\n", ServiceName, erpRecord.MoySkladCode, err)
+	}
+	return nil
+}
