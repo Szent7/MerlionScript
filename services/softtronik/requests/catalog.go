@@ -10,7 +10,7 @@ import (
 )
 
 func GetAllCategoryCodes() ([]softtronikTypes.CategoryItem, error) {
-	url := fmt.Sprintf(softtronikTypes.CategoryUrl, keeper.K.GetSofttronikContractor())
+	url := fmt.Sprintf(softtronikTypes.CategoryUrl, keeper.GetSofttronikContractor())
 
 	response, err := rest.CreateRequest("GET", url, nil, "")
 	if err != nil {

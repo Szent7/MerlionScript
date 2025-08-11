@@ -142,6 +142,7 @@ func IncreaseItemsAvail(request *skladTypes.Acceptance) error {
 	if response.StatusCode != 200 {
 		fmt.Println(response.StatusCode)
 		fmt.Println(string(response.Body))
+		// fmt.Println(string(jsonBody))
 		return err
 	}
 	return nil
@@ -162,6 +163,7 @@ func DecreaseItemsAvail(request *skladTypes.Acceptance) error {
 	if response.StatusCode != 200 {
 		fmt.Println(response.StatusCode)
 		fmt.Println(string(response.Body))
+		// fmt.Println(string(jsonBody))
 		return err
 	}
 	return nil

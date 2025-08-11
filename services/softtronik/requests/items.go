@@ -9,7 +9,7 @@ import (
 )
 
 func GetItemsByCatId(catId string) ([]softtronikTypes.ProductItem, error) {
-	url := fmt.Sprintf(softtronikTypes.ItemUrl, keeper.K.GetSofttronikContractor(), catId)
+	url := fmt.Sprintf(softtronikTypes.ItemUrl, keeper.GetSofttronikContractor(), catId)
 
 	response, err := rest.CreateRequest("GET", url, nil, "")
 	if err != nil {
@@ -30,7 +30,7 @@ func GetItemsByCatId(catId string) ([]softtronikTypes.ProductItem, error) {
 }
 
 func GetItemsAvails(catId string) (softtronikTypes.StocksItem, error) {
-	url := fmt.Sprintf(softtronikTypes.StocksUrl, keeper.K.GetSofttronikContractor(), catId, keeper.K.GetSofttronikContractKey())
+	url := fmt.Sprintf(softtronikTypes.StocksUrl, keeper.GetSofttronikContractor(), catId, keeper.GetSofttronikContractKey())
 
 	response, err := rest.CreateRequest("GET", url, nil, "")
 	if err != nil {

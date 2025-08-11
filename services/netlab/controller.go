@@ -34,8 +34,8 @@ type NetlabService struct {
 
 func Init() {
 	srv := new(NetlabService)
-	srv.orgName = keeper.K.GetNetlabOrg()
-	srv.storeName = keeper.K.GetNetlabSklad()
+	srv.orgName = keeper.GetNetlabOrg()
+	srv.storeName = keeper.GetNetlabSklad()
 	common.RegisteredServices[netlabTypes.ServiceName] = common.ServiceInfo{
 		DBTableName:     netlabTypes.ServiceDBName,
 		ServiceInstance: srv,

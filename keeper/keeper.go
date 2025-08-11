@@ -2,147 +2,131 @@ package keeper
 
 import (
 	"encoding/base64"
+	"fmt"
+	"log"
+
+	"github.com/spf13/viper"
 )
 
-var K ShareData
+var k *ShareData
 
-const (
-	MerlionCredentialsEnv = "MERLION_CREDENTIALS"
-	MerlionOrgEnv         = "MERLION_ORGANIZATION"
-	MerlionSkladEnv       = "MERLION_SKLAD"
-
-	NetlabLoginEnv    = "NETLAB_LOGIN"
-	NetlabPasswordEnv = "NETLAB_PASSWORD"
-	NetlabOrgEnv      = "NETLAB_ORGANIZATION"
-	NetlabSkladEnv    = "NETLAB_SKLAD"
-
-	SofttronikContractorKeyEnv = "SOFTTRONIK_CONTRACTOR_KEY"
-	SofttronikContractKeyEnv   = "SOFTTRONIK_CONTRACT_KEY"
-	SofttronikOrgEnv           = "SOFTTRONIK_ORGANIZATION"
-	SofttronikSkladEnv         = "SOFTTRONIK_SKLAD"
-
-	ElektronmirIDEnv       = "ELEKTRONMIR_ID"
-	ElektronmirSecretEnv   = "ELEKTRONMIR_SECRET"
-	ElektronmirOrgEnv      = "ELEKTRONMIR_ORGANIZATION"
-	ElektronmirSkladOneEnv = "ELEKTRONMIR_SKLAD_ONE"
-
-	SkladTokenEnv   = "MOY_SKLAD_TOKEN"
-	CatSkladNameEnv = "CATALOG"
-)
-
-type ShareData struct {
-	merlionCredentials string
-	merlionOrg         string
-	merlionSklad       string
-
-	netlabLogin    string
-	netlabPassword string
-	netlabOrg      string
-	netlabSklad    string
-
-	softtronikContractor  string
-	softtronikContractKey string
-	softtronikOrg         string
-	softtronikSklad       string
-
-	elektronmirID       string
-	elektronmirSecret   string
-	elektronmirOrg      string
-	elektronmirSkladOne string
-
-	skladToken   string
-	catSkladName string
+func init() {
+	k = new(ShareData)
 }
 
-func (sd *ShareData) SetData(data map[string]string) {
-	sd.merlionCredentials = base64.StdEncoding.EncodeToString([]byte(data[MerlionCredentialsEnv]))
-	sd.merlionOrg = data[MerlionOrgEnv]
-	sd.merlionSklad = data[MerlionSkladEnv]
+type ShareData struct {
+	MerlionCredentials string `mapstructure:"MERLION_CREDENTIALS"`
+	MerlionOrg         string `mapstructure:"MERLION_ORGANIZATION"`
+	MerlionSklad       string `mapstructure:"MERLION_SKLAD"`
 
-	sd.netlabLogin = data[NetlabLoginEnv]
-	sd.netlabPassword = data[NetlabPasswordEnv]
-	sd.netlabOrg = data[NetlabOrgEnv]
-	sd.netlabSklad = data[NetlabSkladEnv]
+	NetlabLogin    string `mapstructure:"NETLAB_LOGIN"`
+	NetlabPassword string `mapstructure:"NETLAB_PASSWORD"`
+	NetlabOrg      string `mapstructure:"NETLAB_ORGANIZATION"`
+	NetlabSklad    string `mapstructure:"NETLAB_SKLAD"`
 
-	sd.softtronikContractor = data[SofttronikContractorKeyEnv]
-	sd.softtronikContractKey = data[SofttronikContractKeyEnv]
-	sd.softtronikOrg = data[SofttronikOrgEnv]
-	sd.softtronikSklad = data[SofttronikSkladEnv]
+	SofttronikContractor  string `mapstructure:"SOFTTRONIK_CONTRACTOR_KEY"`
+	SofttronikContractKey string `mapstructure:"SOFTTRONIK_CONTRACT_KEY"`
+	SofttronikOrg         string `mapstructure:"SOFTTRONIK_ORGANIZATION"`
+	SofttronikSklad       string `mapstructure:"SOFTTRONIK_SKLAD"`
 
-	sd.elektronmirID = data[ElektronmirIDEnv]
-	sd.elektronmirSecret = data[ElektronmirSecretEnv]
-	sd.elektronmirOrg = data[ElektronmirOrgEnv]
-	sd.elektronmirSkladOne = data[ElektronmirSkladOneEnv]
+	ElektronmirID       string `mapstructure:"ELEKTRONMIR_ID"`
+	ElektronmirSecret   string `mapstructure:"ELEKTRONMIR_SECRET"`
+	ElektronmirOrg      string `mapstructure:"ELEKTRONMIR_ORGANIZATION"`
+	ElektronmirSkladOne string `mapstructure:"ELEKTRONMIR_SKLAD_ONE"`
 
-	sd.skladToken = data[SkladTokenEnv]
-	sd.catSkladName = data[CatSkladNameEnv]
+	SkladToken   string `mapstructure:"MOY_SKLAD_TOKEN"`
+	CatSkladName string `mapstructure:"CATALOG"`
+}
+
+func InitKeeper() { k.initKeeper() }
+func (k *ShareData) initKeeper() {
+	viper.SetConfigType("env")
+	viper.SetConfigFile(".env")
+	viper.AddConfigPath(".")
+	//viper.AutomaticEnv()
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error config file: %w", err))
+	}
+
+	secret := viper.GetString("MERLION_CREDENTIALS")
+	if secret == "" {
+		log.Fatal("Переменная 'MERLION_CREDENTIALS' не найдена в переменных окружения")
+	}
+	encodedSecret := base64.StdEncoding.EncodeToString([]byte(secret))
+	viper.Set("MERLION_CREDENTIALS", encodedSecret)
+
+	if err := viper.Unmarshal(k); err != nil {
+		log.Fatalf("Ошибка разбора конфигурации: %v", err)
+	}
 }
 
 // Merlion
-func (sd *ShareData) GetMerlionCredentials() string {
-	return sd.merlionCredentials
+func GetMerlionCredentials() string {
+	return k.MerlionCredentials
 }
 
-func (sd *ShareData) GetMerlionOrg() string {
-	return sd.merlionOrg
+func GetMerlionOrg() string {
+	return k.MerlionOrg
 }
 
-func (sd *ShareData) GetMerlionSklad() string {
-	return sd.merlionSklad
+func GetMerlionSklad() string {
+	return k.MerlionSklad
 }
 
 // Netlab
-func (sd *ShareData) GetCredentialsNetlab() (string, string) {
-	return sd.netlabLogin, sd.netlabPassword
+func GetCredentialsNetlab() (string, string) {
+	return k.NetlabLogin, k.NetlabPassword
 }
 
-func (sd *ShareData) GetNetlabOrg() string {
-	return sd.netlabOrg
+func GetNetlabOrg() string {
+	return k.NetlabOrg
 }
 
-func (sd *ShareData) GetNetlabSklad() string {
-	return sd.netlabSklad
+func GetNetlabSklad() string {
+	return k.NetlabSklad
 }
 
 // Softtronik
-func (sd *ShareData) GetSofttronikContractor() string {
-	return sd.softtronikContractor
+func GetSofttronikContractor() string {
+	return k.SofttronikContractor
 }
 
-func (sd *ShareData) GetSofttronikContractKey() string {
-	return sd.softtronikContractKey
+func GetSofttronikContractKey() string {
+	return k.SofttronikContractKey
 }
 
-func (sd *ShareData) GetSofttronikOrg() string {
-	return sd.softtronikOrg
+func GetSofttronikOrg() string {
+	return k.SofttronikOrg
 }
 
-func (sd *ShareData) GetSofttronikSklad() string {
-	return sd.softtronikSklad
+func GetSofttronikSklad() string {
+	return k.SofttronikSklad
 }
 
 // Elektronmir
-func (sd *ShareData) GetElektronmirID() string {
-	return sd.elektronmirID
+func GetElektronmirID() string {
+	return k.ElektronmirID
 }
 
-func (sd *ShareData) GetElektronmirSecret() string {
-	return sd.elektronmirSecret
+func GetElektronmirSecret() string {
+	return k.ElektronmirSecret
 }
 
-func (sd *ShareData) GetElektronmirOrg() string {
-	return sd.elektronmirOrg
+func GetElektronmirOrg() string {
+	return k.ElektronmirOrg
 }
 
-func (sd *ShareData) GetElektronmirSkladOne() string {
-	return sd.elektronmirSkladOne
+func GetElektronmirSkladOne() string {
+	return k.ElektronmirSkladOne
 }
 
 // MS
-func (sd *ShareData) GetMSCredentials() string {
-	return sd.skladToken
+func GetMSCredentials() string {
+	return k.SkladToken
 }
 
-func (sd *ShareData) GetSkladCat() string {
-	return sd.catSkladName
+func GetSkladCat() string {
+	return k.CatSkladName
 }

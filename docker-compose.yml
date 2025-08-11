@@ -1,6 +1,8 @@
 services:
   merlion_script:
     build: .
+    image: mscript
+    container_name: mscript-1
     #ports:
     #  - "10015:10015"
     volumes:

@@ -9,7 +9,7 @@ import (
 )
 
 func getItemsImages(itemCode string) (softtronikTypes.ImageItem, error) {
-	url := fmt.Sprintf(softtronikTypes.ImageUrl, keeper.K.GetSofttronikContractor(), itemCode)
+	url := fmt.Sprintf(softtronikTypes.ImageUrl, keeper.GetSofttronikContractor(), itemCode)
 
 	response, err := rest.CreateRequest("GET", url, nil, "")
 	if err != nil {

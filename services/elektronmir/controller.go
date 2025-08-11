@@ -32,8 +32,8 @@ type ElektronmirService struct {
 
 func Init() {
 	srv := new(ElektronmirService)
-	srv.orgName = keeper.K.GetElektronmirOrg()
-	srv.storeName = keeper.K.GetElektronmirSkladOne()
+	srv.orgName = keeper.GetElektronmirOrg()
+	srv.storeName = keeper.GetElektronmirSkladOne()
 	common.RegisteredServices[elektronmirTypes.ServiceName] = common.ServiceInfo{
 		DBTableName:     elektronmirTypes.ServiceDBName,
 		ServiceInstance: srv,
@@ -172,7 +172,8 @@ func (srv *ElektronmirService) GetStocksList(ctx context.Context, dbInstance int
 				if offer.WarehouseID == 1 {
 					stockList[code] = common.StockList{
 						Stock: offer.Quantity,
-						Price: float32(offer.PriceRRC * 100),
+						// Price: float32(offer.PriceRRC * 100),
+						Price: 0,
 					}
 					break
 				}
@@ -211,7 +212,7 @@ func (srv *ElektronmirService) GetImagesList(ctx context.Context, code string) (
 
 	// 	return &imageList, nil
 	// }
-	return nil, nil
+	return &[]common.ImageList{}, nil
 }
 
 func (srv *ElektronmirService) GetOrgName() string {

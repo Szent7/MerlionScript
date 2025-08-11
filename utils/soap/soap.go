@@ -65,7 +65,7 @@ func soapCall(ws string, action string, payloadInterface interface{}) ([]byte, e
 	req.Header.Set("Accept", "text/xml, multipart/related")
 	req.Header.Set("SOAPAction", action)
 	req.Header.Set("Content-Type", "text/xml; charset=utf-8")
-	req.Header.Set("Authorization", "Basic "+keeper.K.GetMerlionCredentials())
+	req.Header.Set("Authorization", "Basic "+keeper.GetMerlionCredentials())
 
 	/*dump, err := httputil.DumpRequestOut(req, true)
 	if err != nil {

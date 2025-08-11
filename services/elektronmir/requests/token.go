@@ -12,8 +12,8 @@ import (
 
 func GetNewToken() (string, error) {
 	request := elektronmirTypes.TokenRequest{
-		ClientID:     keeper.K.GetElektronmirID(),
-		ClientSecret: keeper.K.GetElektronmirSecret(),
+		ClientID:     keeper.GetElektronmirID(),
+		ClientSecret: keeper.GetElektronmirSecret(),
 	}
 	jsonBody, err := json.MarshalIndent(request, "", "  ")
 	if err != nil {

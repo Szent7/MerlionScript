@@ -40,7 +40,7 @@ func CompareArticle(PositionsERP *[]common.ItemList, PositionService *common.Ite
 	if serviceBnum == -1 {
 		return common.ItemList{}, fmt.Errorf("ошибка при парсинге -0000B номера | article = %s\n", PositionService.Article)
 	}
-	//TODO позиция с 3 артикулами, добавить проверку на уникальность кода мс
+
 	for i := range *PositionsERP {
 		// Если полностью совпадает
 		if СontainsSubstring((*PositionsERP)[i].PositionName, PositionService.Article) {

@@ -33,8 +33,8 @@ type SofttronikService struct {
 
 func Init() {
 	srv := new(SofttronikService)
-	srv.orgName = keeper.K.GetSofttronikOrg()
-	srv.storeName = keeper.K.GetSofttronikSklad()
+	srv.orgName = keeper.GetSofttronikOrg()
+	srv.storeName = keeper.GetSofttronikSklad()
 	common.RegisteredServices[softtronikTypes.ServiceName] = common.ServiceInfo{
 		DBTableName:     softtronikTypes.ServiceDBName,
 		ServiceInstance: srv,

@@ -24,8 +24,8 @@ type MerlionService struct {
 
 func Init() {
 	srv := new(MerlionService)
-	srv.orgName = keeper.K.GetMerlionOrg()
-	srv.storeName = keeper.K.GetMerlionSklad()
+	srv.orgName = keeper.GetMerlionOrg()
+	srv.storeName = keeper.GetMerlionSklad()
 	common.RegisteredServices[merlionTypes.ServiceName] = common.ServiceInfo{
 		DBTableName:     merlionTypes.ServiceDBName,
 		ServiceInstance: srv,

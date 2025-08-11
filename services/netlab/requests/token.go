@@ -9,7 +9,7 @@ import (
 )
 
 func GetNewToken() (string, error) {
-	netlabLogin, netlabPassword := keeper.K.GetCredentialsNetlab()
+	netlabLogin, netlabPassword := keeper.GetCredentialsNetlab()
 	url := fmt.Sprintf(netlabTypes.TokenUrl, netlabLogin, netlabPassword)
 
 	response, err := rest.CreateRequest("GET", url, nil, "")

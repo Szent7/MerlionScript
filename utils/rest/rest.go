@@ -160,7 +160,7 @@ func CreateRequestImageHeader(reqType string, url string, bodyRequest io.Reader,
 }
 
 func CreateRequestMS(reqType string, url string, bodyRequest io.Reader) (*Response, error) {
-	return CreateRequest(reqType, url, bodyRequest, keeper.K.GetMSCredentials())
+	return CreateRequest(reqType, url, bodyRequest, keeper.GetMSCredentials())
 }
 
 func CreateRequestXML(reqType string, url string, bodyRequest io.Reader) (*xml.Decoder, error) {

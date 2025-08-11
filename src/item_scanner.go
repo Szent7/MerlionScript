@@ -34,9 +34,6 @@ func CreateNewPositionsERP(ctx context.Context, dbInstance interfaceDB.DB, servi
 		}
 		var createdItems int = 0
 		for i := range *Items {
-			if createdItems >= 10 {
-				break
-			}
 			select {
 			case <-ctx.Done():
 				return nil
@@ -108,7 +105,7 @@ func createPosition(erpRecord typesDB.CodesIDs, counter *int64, dbInstance inter
 	log.Printf("%s (CreateNewPositionsERP): полных соответствий не найдено (создаю новую позицию) | article = %s ", ServiceName, item.Article)
 	newId := db.GetFormatID(*counter)
 	erpRecord.MoySkladCode = newId
-	if err := erpSystem.CreateItem(&erpRecord, newId, item.PositionName, keeper.K.GetSkladCat()); err != nil {
+	if err := erpSystem.CreateItem(&erpRecord, newId, item.PositionName, keeper.GetSkladCat()); err != nil {
 		log.Printf("%s (CreateNewPositionsERP): ошибка при создании записи на МС | erpCode = %s; err = %s\n", ServiceName, erpRecord.MoySkladCode, err)
 		return err
 	}

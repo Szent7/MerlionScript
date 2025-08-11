@@ -77,9 +77,9 @@ func UpdateRemainsERP(ctx context.Context, dbInstance interfaceDB.DB, service co
 			default:
 				//Запись ERP
 				itemERP, err := erpSystem.GetItemAvails(item.Codes.MoySkladCode, storeUUID)
-				if err != nil {
-					log.Printf("%s (UpdateRemainsERP): ошибка при получении записей из ERP | err = %s\n", ServiceName, err)
-					return err
+				if err != nil || itemERP.ItemMeta.Href == "" {
+					log.Printf("%s (UpdateRemainsERP): ошибка при получении записей из ERP | erpCode = %s; err = %s\n", ServiceName, item.Codes.MoySkladCode, err)
+					continue
 				}
 				if itemERP.IsSerialTrackable {
 					log.Printf("%s (UpdateRemainsERP): товар с серийным учетом в приемку/списание не попал | erpCode = %s\n", ServiceName, item.Codes.MoySkladCode)
@@ -93,6 +93,8 @@ func UpdateRemainsERP(ctx context.Context, dbInstance interfaceDB.DB, service co
 				}
 
 				if itemERP.Stock > itemService.Stock {
+					// log.Printf("на списание article = %s erpCode = %s serviceCode = %s quantityERP = %d quantityService = %d\n",
+					// item.Codes.Article, item.Codes.MoySkladCode, item.Service.ServiceCode, itemERP.Stock, itemService.Stock)
 					woffList = append(woffList, skladTypes.PositionsAdd{
 						Quantity:   itemERP.Stock - itemService.Stock,
 						Assortment: skladTypes.MetaMiddle{Meta: itemERP.ItemMeta},
@@ -117,6 +119,8 @@ func UpdateRemainsERP(ctx context.Context, dbInstance interfaceDB.DB, service co
 			}
 		}
 
+		woffList = removeDuplicates(woffList)
+
 		if len(woffList) != 0 {
 			woffReq.Positions = woffList
 			fmt.Printf("%s: позиций в списании %d\n", ServiceName, len(woffList))
@@ -129,4 +133,20 @@ func UpdateRemainsERP(ctx context.Context, dbInstance interfaceDB.DB, service co
 		fmt.Printf("%s: закончил обновлять остатки на мс\n", ServiceName)
 		return nil
 	}
+}
+
+func removeDuplicates(arr []skladTypes.PositionsAdd) []skladTypes.PositionsAdd {
+	seen := make(map[string]bool)
+	result := []skladTypes.PositionsAdd{}
+
+	for _, num := range arr {
+		if !seen[num.Assortment.Meta.Href] {
+			seen[num.Assortment.Meta.Href] = true
+			result = append(result, num)
+			continue
+		}
+		log.Printf("удален дубликат %s\n", num.Assortment.Meta.Href)
+	}
+
+	return result
 }
