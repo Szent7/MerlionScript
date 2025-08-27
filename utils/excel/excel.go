@@ -13,7 +13,7 @@ type Workbook struct {
 	Path string
 }
 
-// Open открывает существующий файл Excel и возвращает Workbook.
+// Open открывает существующий файл Excel и возвращает Workbook
 func Open(path string) (*Workbook, error) {
 	f, err := excelize.OpenFile(path)
 	if err != nil {
@@ -22,24 +22,26 @@ func Open(path string) (*Workbook, error) {
 	return &Workbook{File: f, Path: path}, nil
 }
 
-// Close закрывает файл.
+// Close закрывает файл
 func (wb *Workbook) Close() error {
 	return wb.Close()
 }
 
-// Save сохраняет файл в оригинальное место.
+// Save сохраняет файл в оригинальное место
 func (wb *Workbook) Save() error {
 	return wb.Save()
 }
 
-// SaveAs сохраняет файл в другой путь.
+// SaveAs сохраняет файл в другой путь
 func (wb *Workbook) SaveAs(newPath string) error {
 	return wb.SaveAs(newPath)
 }
 
+// ---------------------------------------
 // Ячейки
+// ---------------------------------------
 
-// CellValue читаёт значение из ячейки ("Sheet1", "A1") и возвращает его как строку.
+// CellValue читаёт значение из ячейки ("Sheet1", "A1") и возвращает его как строку
 func (wb *Workbook) CellValue(sheet, cell string) (string, error) {
 	val, err := wb.GetCellValue(sheet, cell)
 	if err != nil {
@@ -48,17 +50,19 @@ func (wb *Workbook) CellValue(sheet, cell string) (string, error) {
 	return val, nil
 }
 
-// SetCellValue записывает значение в ячейку.
-func (wb *Workbook) SetCellValue(sheet, cell string, value interface{}) error {
+// SetCellValue записывает значение в ячейку
+func (wb *Workbook) SetCellValue(sheet, cell string, value any) error {
 	if err := wb.SetCellValue(sheet, cell, value); err != nil {
 		return err
 	}
 	return nil
 }
 
+// ---------------------------------------
 // Строки/столбцы
+// ---------------------------------------
 
-// Rows возвращает все строки указанного листа.
+// Rows возвращает все строки указанного листа
 func (wb *Workbook) Rows(sheet string) ([][]string, error) {
 	rows, err := wb.GetRows(sheet)
 	if err != nil {
@@ -67,7 +71,7 @@ func (wb *Workbook) Rows(sheet string) ([][]string, error) {
 	return rows, nil
 }
 
-// Row возвращает n‑ую строку. Если ряд не существует – nil.
+// Row возвращает n‑ую строку. Если ряд не существует – возвращает nil
 func (wb *Workbook) Row(sheet string, rowIndex int) ([]string, error) {
 	if rowIndex < 1 {
 		return nil, errors.New("индекс строки должен быть >= 1")
@@ -82,7 +86,7 @@ func (wb *Workbook) Row(sheet string, rowIndex int) ([]string, error) {
 	return rows[rowIndex-1], nil
 }
 
-// Column возвращает все значения из указанного столбца (буквенно, например "B").
+// Column возвращает все значения из указанного столбца (буквенно, например "B")
 func (wb *Workbook) Column(sheet, column string) ([]string, error) {
 	if column == "" {
 		return nil, errors.New("имя столбца не может быть пустым")
@@ -106,9 +110,11 @@ func (wb *Workbook) Column(sheet, column string) ([]string, error) {
 	return res, nil
 }
 
+// ---------------------------------------
 // Строки
+// ---------------------------------------
 
-// AppendRows добавляет строки в конец листа.
+// AppendRows добавляет строки в конец листа
 func (wb *Workbook) AppendRow(sheet string, row []any) error {
 	// Проверяем, существует ли лист
 	if _, err := wb.GetSheetIndex(sheet); err != nil {
@@ -135,7 +141,7 @@ func (wb *Workbook) AppendRow(sheet string, row []any) error {
 	return nil
 }
 
-// InsertRows вставляет строки начиная с rowIndex.
+// InsertRows вставляет строки начиная с rowIndex
 func (wb *Workbook) InsertRows(sheet string, rowIndex int, row []any) error {
 	// Проверяем, существует ли лист
 	if _, err := wb.GetSheetIndex(sheet); err != nil {
@@ -162,9 +168,11 @@ func (wb *Workbook) InsertRows(sheet string, rowIndex int, row []any) error {
 	return nil
 }
 
+// ---------------------------------------
 // Лист
+// ---------------------------------------
 
-// CreateSheet создаёт новый лист. Если лист с таким именем уже есть – nil.
+// CreateSheet создаёт новый лист
 func (wb *Workbook) CreateSheet(name string) error {
 	if index, _ := wb.GetSheetIndex(name); index > 0 {
 		return nil
@@ -175,7 +183,7 @@ func (wb *Workbook) CreateSheet(name string) error {
 	return nil
 }
 
-// DeleteSheet удаляет лист. Если лист не существует – nil.
+// DeleteSheet удаляет лист
 func (wb *Workbook) DeleteSheet(name string) error {
 	if index, _ := wb.GetSheetIndex(name); index <= 0 {
 		return nil

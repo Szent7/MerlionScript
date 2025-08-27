@@ -11,19 +11,24 @@ import (
 	"time"
 )
 
+// StartController управляет запуском рабочего цикла
 func StartController(ctx context.Context, wg *sync.WaitGroup, dbInstance *db.DB) {
 	defer wg.Done()
-	var startHour int = 7
-	var endHour int = 19
+
+	var startHour int = 7 // Начальное время рабочего периода
+	var endHour int = 19  // Конечное время рабочего периода
+
+	// Проверка существования сервисов в системе
 	if len(common.RegisteredServices) == 0 {
 		fmt.Println("Контроллеры сервисов не обнаружены")
 		return
 	}
+
 	for {
 		now := time.Now()
 		hour := now.Hour()
 
-		//Если текущее время вне рабочего диапазона — ждём до следующего startHour
+		//Если текущее время вне рабочего диапазона, выполняется резервное копирование и ожидание до следующего startHour
 		if hour < startHour || hour >= endHour {
 			if keeper.GetBackupToggle() {
 				fmt.Println("Создание бэкапа...")
@@ -38,29 +43,30 @@ func StartController(ctx context.Context, wg *sync.WaitGroup, dbInstance *db.DB)
 				startHour, 0, 0, 0, now.Location(),
 			)
 
-			//Если уже позже 19:00, ждём до завтрашнего 7:00
+			// Если уже после 19:00
 			if now.Hour() >= endHour {
 				sleepUntil = sleepUntil.Add(24 * time.Hour)
 			}
 
-			sleepDuration := time.Until(sleepUntil)
-			timer := time.NewTimer(sleepDuration)
+			sleepDuration := time.Until(sleepUntil) // Продолжительность до следующего startHour.
+			timer := time.NewTimer(sleepDuration)   // Таймер ожидания
 			select {
 			case <-ctx.Done():
 				fmt.Println("Контроллер завершает работу из-за отмены контекста")
-				timer.Stop()
+				timer.Stop() // Остановка таймера, если контекст отменен
 				return
 			case <-timer.C:
-				continue //Начинаем новый рабочий период
+				continue // Следующая итерация после периода ожидания
 			}
 		}
+
 		//Рабочее время
 		select {
 		case <-ctx.Done():
 			fmt.Println("StartController работу закончил из-за контекста")
 			return
 		default:
-			ExecuteService(ctx, dbInstance)
+			ExecuteService(ctx, dbInstance) // Вызов рабочего цикла
 		}
 	}
 }

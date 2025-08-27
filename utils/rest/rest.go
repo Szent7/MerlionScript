@@ -10,18 +10,22 @@ import (
 	"net/http"
 )
 
+// Response - структура HTTP ответа
 type Response struct {
 	Body       []byte
 	StatusCode int
 }
 
+// Создает HTTP-запрос на основе заданных параметров и выполняет его
 func CreateRequest(reqType string, url string, bodyRequest io.Reader, bearerToken string) (*Response, error) {
+	// Создание HTTP-запроса
 	req, err := http.NewRequest(reqType, url, bodyRequest)
 	if err != nil {
 		fmt.Println("Ошибка при создании запроса:", err)
 		return nil, err
 	}
 
+	// Устанавливает заголовки запроса
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Accept-Encoding", "gzip")
 	if bearerToken != "" {
@@ -29,7 +33,7 @@ func CreateRequest(reqType string, url string, bodyRequest io.Reader, bearerToke
 	}
 
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) // Выполняет HTTP запрос
 	if err != nil {
 		fmt.Println("Ошибка при выполнении запроса:", err)
 		return nil, err
@@ -41,6 +45,7 @@ func CreateRequest(reqType string, url string, bodyRequest io.Reader, bearerToke
 		//return nil, err
 	}*/
 	var body []byte
+	// Обработка ответа с сжатием и без
 	if resp.Header.Get("Content-Encoding") == "gzip" {
 		gz, err := gzip.NewReader(resp.Body)
 		if err != nil {
@@ -60,16 +65,20 @@ func CreateRequest(reqType string, url string, bodyRequest io.Reader, bearerToke
 			return nil, err
 		}
 	}
+
 	return &Response{Body: body, StatusCode: resp.StatusCode}, nil
 }
 
+// Создает HTTP-запрос на основе заданных параметров и выполняет его. Только для интеграции ЭМ
 func CreateRequestElektronmir(reqType string, url string, bodyRequest io.Reader, Token string) (*Response, error) {
+	// Создание HTTP-запроса
 	req, err := http.NewRequest(reqType, url, bodyRequest)
 	if err != nil {
 		fmt.Println("Ошибка при создании запроса:", err)
 		return nil, err
 	}
 
+	// Устанавливает заголовки запроса
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Accept-Encoding", "gzip")
 	if Token != "" {
@@ -77,7 +86,7 @@ func CreateRequestElektronmir(reqType string, url string, bodyRequest io.Reader,
 	}
 
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) // Выполняет HTTP запрос
 	if err != nil {
 		fmt.Println("Ошибка при выполнении запроса:", err)
 		return nil, err
@@ -89,6 +98,7 @@ func CreateRequestElektronmir(reqType string, url string, bodyRequest io.Reader,
 		//return nil, err
 	}*/
 	var body []byte
+	// Обработка ответа с сжатием и без
 	if resp.Header.Get("Content-Encoding") == "gzip" {
 		gz, err := gzip.NewReader(resp.Body)
 		if err != nil {
@@ -108,16 +118,20 @@ func CreateRequestElektronmir(reqType string, url string, bodyRequest io.Reader,
 			return nil, err
 		}
 	}
+
 	return &Response{Body: body, StatusCode: resp.StatusCode}, nil
 }
 
+// Создает HTTP-запрос на основе заданных параметров и выполняет его. Только для запросов на получение изображений. Возвращает Content-Type
 func CreateRequestImageHeader(reqType string, url string, bodyRequest io.Reader, bearerToken string) (*Response, string, error) {
+	// Создание HTTP-запроса
 	req, err := http.NewRequest(reqType, url, bodyRequest)
 	if err != nil {
 		fmt.Println("Ошибка при создании запроса:", err)
 		return nil, "", err
 	}
 
+	// Устанавливает заголовки запроса
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Accept-Encoding", "gzip")
 	if bearerToken != "" {
@@ -125,7 +139,7 @@ func CreateRequestImageHeader(reqType string, url string, bodyRequest io.Reader,
 	}
 
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) // Выполняет HTTP запрос
 	if err != nil {
 		fmt.Println("Ошибка при выполнении запроса:", err)
 		return nil, "", err
@@ -137,6 +151,7 @@ func CreateRequestImageHeader(reqType string, url string, bodyRequest io.Reader,
 		//return nil, err
 	}*/
 	var body []byte
+	// Обработка ответа с сжатием и без
 	if resp.Header.Get("Content-Encoding") == "gzip" {
 		gz, err := gzip.NewReader(resp.Body)
 		if err != nil {
@@ -156,20 +171,25 @@ func CreateRequestImageHeader(reqType string, url string, bodyRequest io.Reader,
 			return nil, "", err
 		}
 	}
+
 	return &Response{Body: body, StatusCode: resp.StatusCode}, resp.Header.Get("Content-Type"), nil
 }
 
+// Обертка над HTTP-запросом. Только для ERP системы. Использует данные для входа ERP системы
 func CreateRequestMS(reqType string, url string, bodyRequest io.Reader) (*Response, error) {
 	return CreateRequest(reqType, url, bodyRequest, keeper.GetMSCredentials())
 }
 
+// Обертка над HTTP-запросом. Только если ответ приходит в виде XML.
 func CreateRequestXML(reqType string, url string, bodyRequest io.Reader) (*xml.Decoder, error) {
 	resp, err := CreateRequest(reqType, url, bodyRequest, "")
 	if err != nil {
 		return nil, err
 	}
+
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("ошибка при выполнении запроса (createrequestxml) statuscode: %d", resp.StatusCode)
 	}
+
 	return xml.NewDecoder(bytes.NewReader(resp.Body)), nil
 }

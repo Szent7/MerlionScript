@@ -9,8 +9,10 @@ import (
 	"github.com/allegro/bigcache/v3"
 )
 
+// Глобальная переменная для хранения текущего экземпляра кэша
 var Cache *bigcache.BigCache
 
+// InitCache инициализирует кэш с заданными параметрами
 func InitCache(ctx context.Context) error {
 	config := bigcache.Config{
 		Shards:             1024,
@@ -32,6 +34,7 @@ func InitCache(ctx context.Context) error {
 	return nil
 }
 
+// Serialize кодирует данные в формат gob и возвращает байтовый массив
 func Serialize[T any](data T) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -41,6 +44,7 @@ func Serialize[T any](data T) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Deserialize декодирует байтовый массив в данные указанного типа
 func Deserialize[T any](data []byte) (T, error) {
 	var result T
 	buf := bytes.NewBuffer(data)
@@ -51,6 +55,7 @@ func Deserialize[T any](data []byte) (T, error) {
 	return result, nil
 }
 
+// CacheRecord сохраняет запись в кэше под указанным ключом
 func CacheRecord[T any](key string, record T) error {
 	sRecord, err := Serialize(record)
 	if err != nil {
