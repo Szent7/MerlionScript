@@ -136,6 +136,7 @@ func (srv *MerlionService) GetStocksList(ctx context.Context, dbInstance interfa
 		stockList := make(map[string]common.StockList, len(*items))
 		itemsArticle := make([]string, len(*items))
 		for i := range *items {
+			stockList[(*items)[i].ServiceCode] = common.StockList{}
 			itemsArticle[i] = (*items)[i].ServiceCode
 		}
 		for i := 0; i < len(*items); i += batchSize {
@@ -188,3 +189,5 @@ func (srv *MerlionService) GetOrgName() string {
 func (srv *MerlionService) GetStoreName() string {
 	return srv.storeName
 }
+
+func (srv *MerlionService) Finalize() {}

@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"MerlionScript/keeper"
 	"MerlionScript/services/common"
+	"MerlionScript/utils/backup"
 	"MerlionScript/utils/db"
 	"context"
 	"fmt"
@@ -23,6 +25,13 @@ func StartController(ctx context.Context, wg *sync.WaitGroup, dbInstance *db.DB)
 
 		//Если текущее время вне рабочего диапазона — ждём до следующего startHour
 		if hour < startHour || hour >= endHour {
+			if keeper.GetBackupToggle() {
+				fmt.Println("Создание бэкапа...")
+				if err := backup.CreateDefaultBackup(); err != nil {
+					fmt.Printf("Ошибка при создании бэкапа: %s\n", err)
+				}
+			}
+
 			fmt.Println("Вне рабочего времени. Ожидаем следующего старта.")
 			sleepUntil := time.Date(
 				now.Year(), now.Month(), now.Day(),

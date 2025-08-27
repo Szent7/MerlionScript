@@ -2,9 +2,9 @@ package db
 
 import (
 	"MerlionScript/utils/db/typesDB"
+	"MerlionScript/utils/dir"
 	"database/sql"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -16,20 +16,20 @@ type DB struct {
 
 var instance *DB
 
-func createDirectory(path string) error {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		err = os.Mkdir(path, 0660)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
-	}
-	return nil
-}
+// func createDirectory(path string) error {
+// 	_, err := os.Stat(path)
+// 	if os.IsNotExist(err) {
+// 		err = os.Mkdir(path, 0660)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 func createDBConnection(pathToDB string) (*sql.DB, error) {
-	err := createDirectory(pathToDB)
+	err := dir.CreateDirectoryDefault(pathToDB)
 	if err != nil {
 		return nil, err
 	}

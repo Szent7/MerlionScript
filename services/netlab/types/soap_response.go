@@ -10,6 +10,12 @@ type ItemCategory struct {
 	Leaf     bool     `xml:"leaf"`
 }
 
+type ItemById struct {
+	XMLName    xml.Name   `xml:"data"`
+	ID         string     `xml:"id"`
+	Properties Properties `xml:"properties"`
+}
+
 type Item struct {
 	XMLName    xml.Name   `xml:"goods"`
 	ID         string     `xml:"id"`

@@ -34,12 +34,15 @@ func CreateNewPositionsERP(ctx context.Context, dbInstance interfaceDB.DB, servi
 		}
 		var createdItems int = 0
 		for i := range *Items {
+			// if createdItems >= 0 {
+			// 	break
+			// }
 			select {
 			case <-ctx.Done():
 				return nil
 			default:
 				//Поиск по товарам МС
-				articleReplace := strings.ReplaceAll((*Items)[i].Article, " ", "+")
+				articleReplace := strings.ReplaceAll(IgnoreDHManufacturer((*Items)[i].Article), " ", "+")
 				erpItems, err := erpSystem.GetItemsByArticle(articleReplace)
 				if err != nil || erpItems == nil {
 					log.Printf("%s (CreateNewPositionsERP): ошибка при получении записи из ERP | article = %s; err = %s\n", ServiceName, (*Items)[i].Article, err)
@@ -67,15 +70,6 @@ func CreateNewPositionsERP(ctx context.Context, dbInstance interfaceDB.DB, servi
 					//Если позиция существует
 					if foundedItem != (common.ItemList{}) {
 						//foundedItem.Article - код МС, а не артикул позиции
-						/*_, exists, err := dbInstance.GetCodeRecordByMS(foundedItem.Article, DBTableName)
-						if err != nil {
-							log.Printf("%s (CreateNewPositionsERP): ошибка при получении записи из БД | err = %s\n", ServiceName, err)
-							continue
-						}
-						if exists {
-							log.Printf("%s (CreateNewPositionsERP): вероятное задвоение article = %s | соответствие на мс = %s\n", ServiceName, (*Items)[i].Article, foundedItem.Article)
-							continue
-						}*/
 						erpRecord.MoySkladCode = foundedItem.Article
 						// Извлекаем counter из артикула
 						ownId, _ := db.ExtractCounterFromOwnID(erpRecord.MoySkladCode)
@@ -86,6 +80,9 @@ func CreateNewPositionsERP(ctx context.Context, dbInstance interfaceDB.DB, servi
 							log.Printf("%s (CreateNewPositionsERP): ошибка при изменении записи в БД | serviceCode = %s; err = %s\n", ServiceName, ServiceName, err)
 						}
 					} else { //Если совпадения не найдены
+						// if createdItems >= 10 {
+						// 	continue
+						// }
 						if err = createPosition(erpRecord, &counter, dbInstance, erpSystem, ServiceName, (*Items)[i]); err != nil {
 							continue
 						}

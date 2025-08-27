@@ -41,7 +41,7 @@ func GetItemsByCatId(catId string, token string) ([]netlabTypes.Item, error) {
 	return items, nil
 }
 
-func GetItemsByItemId(itemId string, token string) ([]netlabTypes.Item, error) {
+func GetItemsByItemId(itemId string, token string) ([]netlabTypes.ItemById, error) {
 	url := fmt.Sprintf(netlabTypes.ItemIdUrl, itemId, token)
 
 	decoder, err := rest.CreateRequestXML("GET", url, nil)
@@ -49,8 +49,8 @@ func GetItemsByItemId(itemId string, token string) ([]netlabTypes.Item, error) {
 		return nil, err
 	}
 
-	var item netlabTypes.Item
-	var items []netlabTypes.Item
+	var item netlabTypes.ItemById
+	var items []netlabTypes.ItemById
 
 	for {
 		token, err := decoder.Token()
@@ -59,10 +59,10 @@ func GetItemsByItemId(itemId string, token string) ([]netlabTypes.Item, error) {
 		}
 		switch start := token.(type) {
 		case xml.StartElement:
-			if start.Name.Local == "goods" {
+			if start.Name.Local == "data" {
 				err := decoder.DecodeElement(&item, &start)
 				if err != nil {
-					fmt.Println("Ошибка при декодировании item(GetItemsByCatId):", err)
+					fmt.Println("Ошибка при декодировании item(GetItemsByItemId):", err)
 					break
 				}
 
@@ -121,8 +121,8 @@ func GetItemsByItemIdFormatted(itemId string, token string) (netlabTypes.ItemNet
 
 	for i := range rawItems {
 		var item netlabTypes.ItemNetlab
-		for _, property := range rawItems[i].Properties.Property {
-			if item.Id == itemId {
+		if rawItems[i].ID == itemId {
+			for _, property := range rawItems[i].Properties.Property {
 				switch property.Name {
 				case "название":
 					item.Name = property.Value
@@ -145,9 +145,9 @@ func GetItemsByItemIdFormatted(itemId string, token string) (netlabTypes.ItemNet
 					}
 					item.Price = rawPrice
 				}
-				item.Id = rawItems[i].ID
-				return item, nil
 			}
+			item.Id = rawItems[i].ID
+			return item, nil
 		}
 	}
 

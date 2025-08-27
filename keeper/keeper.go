@@ -15,6 +15,9 @@ func init() {
 }
 
 type ShareData struct {
+	Backups       bool `mapstructure:"BACKUPS"`
+	BackupsNumber int  `mapstructure:"BACKUPS_NUMBER"`
+
 	MerlionCredentials string `mapstructure:"MERLION_CREDENTIALS"`
 	MerlionOrg         string `mapstructure:"MERLION_ORGANIZATION"`
 	MerlionSklad       string `mapstructure:"MERLION_SKLAD"`
@@ -33,6 +36,12 @@ type ShareData struct {
 	ElektronmirSecret   string `mapstructure:"ELEKTRONMIR_SECRET"`
 	ElektronmirOrg      string `mapstructure:"ELEKTRONMIR_ORGANIZATION"`
 	ElektronmirSkladOne string `mapstructure:"ELEKTRONMIR_SKLAD_ONE"`
+
+	TorusOrg   string `mapstructure:"TORUS_ORGANIZATION"`
+	TorusSklad string `mapstructure:"TORUS_SKLAD"`
+
+	InfocomOrg   string `mapstructure:"INFOCOM_ORGANIZATION"`
+	InfocomSklad string `mapstructure:"INFOCOM_SKLAD"`
 
 	SkladToken   string `mapstructure:"MOY_SKLAD_TOKEN"`
 	CatSkladName string `mapstructure:"CATALOG"`
@@ -60,6 +69,15 @@ func (k *ShareData) initKeeper() {
 	if err := viper.Unmarshal(k); err != nil {
 		log.Fatalf("Ошибка разбора конфигурации: %v", err)
 	}
+}
+
+//Backups
+func GetBackupToggle() bool {
+	return k.Backups
+}
+
+func GetBackupNumber() int {
+	return k.BackupsNumber
 }
 
 // Merlion
@@ -120,6 +138,24 @@ func GetElektronmirOrg() string {
 
 func GetElektronmirSkladOne() string {
 	return k.ElektronmirSkladOne
+}
+
+// Torus
+func GetTorusOrg() string {
+	return k.TorusOrg
+}
+
+func GetTorusSklad() string {
+	return k.TorusSklad
+}
+
+// Infocom
+func GetInfocomOrg() string {
+	return k.InfocomOrg
+}
+
+func GetInfocomSklad() string {
+	return k.InfocomSklad
 }
 
 // MS

@@ -5,6 +5,7 @@ import (
 	"MerlionScript/keeper"
 	"MerlionScript/services/common"
 	"MerlionScript/services/common/initializer"
+	"MerlionScript/utils/backup"
 	"MerlionScript/utils/cache"
 	"MerlionScript/utils/db"
 	"MerlionScript/utils/db/typesDB"
@@ -23,6 +24,14 @@ func main() {
 	keeper.InitKeeper()
 
 	initializer.InitServices()
+
+	if keeper.GetBackupToggle() {
+		backup.InitBackup(backup.BackupObj{
+			SrcPath:      "./data",
+			BackupDir:    "./data/backup",
+			BackupNumber: keeper.GetBackupNumber(),
+		})
+	}
 
 	dbInstance, err := db.GetDB(typesDB.PathDB)
 	defer db.CloseDB()
@@ -43,7 +52,7 @@ func main() {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	var wg sync.WaitGroup
 
-	fmt.Println("MScript v2.0")
+	fmt.Println("MScript v2.7.4")
 	fmt.Println("Боже, Царя храни!")
 	wg.Add(1)
 	go controller.StartController(ctx, &wg, dbInstance)

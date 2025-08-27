@@ -77,13 +77,13 @@ func (srv *ElektronmirService) GetArticlesList(ctx context.Context) (*[]common.A
 				return &articleList, nil
 			default:
 				items, err := elektronmirReq.GetItemsByCatIdFormatted(cat.ID, token)
-				if err != nil {
+				if err != nil || items == nil {
 					log.Printf("ошибка при получении товаров по каталогу (GetArticlesList) id = %s: %s\n", cat.Name, err)
 					continue
 				}
-				srv.itemsGlobal = append(srv.itemsGlobal, items.Data...)
+				srv.itemsGlobal = append(srv.itemsGlobal, *items...)
 				//цикл по товарам из каталога
-				for _, item := range items.Data {
+				for _, item := range *items {
 					articleList = append(articleList, common.ArticleList{
 						Article:     item.Article,
 						Brand:       item.Vendor,
@@ -159,6 +159,7 @@ func (srv *ElektronmirService) GetStocksList(ctx context.Context, dbInstance int
 				log.Printf("ошибка при конвертации id записи Elektronmir (GetStocksList): %s\n", err)
 				continue
 			}
+			stockList[(*items)[i].ServiceCode] = common.StockList{}
 			itemsArticle[i] = code
 		}
 		itemPart, err := elektronmirReq.GetItemsAvailByItemIdBatch(itemsArticle, token)
@@ -222,3 +223,5 @@ func (srv *ElektronmirService) GetOrgName() string {
 func (srv *ElektronmirService) GetStoreName() string {
 	return srv.storeName
 }
+
+func (srv *ElektronmirService) Finalize() {}

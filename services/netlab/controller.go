@@ -154,9 +154,7 @@ func (srv *NetlabService) GetStocksList(ctx context.Context, dbInstance interfac
 			return nil, err
 		}
 		//Курс доллара
-		// srv.mu.RLock()
 		currency, err := netlabReq.GetCurrency(token)
-		// srv.mu.RUnlock()
 		if err != nil || currency == 0 {
 			log.Printf("ошибка при получении курса валют Нетлаб (GetStocksList): %s\n", err)
 			return nil, err
@@ -166,13 +164,15 @@ func (srv *NetlabService) GetStocksList(ctx context.Context, dbInstance interfac
 		for i := range *items {
 			itemCatalog, found := getGlobalItemsRecord((*items)[i].ServiceCode, srv.itemsGlobal)
 			if !found {
-				// itemRemainsNetlab, err = netlabReq.GetItemsByItemIdFormatted(item.Service, token)
-				// if err != nil {
-				// 	log.Printf("Ошибка при получении остатков с Нетлаба (updateRemainsMS) netlabCode = %s\n", item.Service)
-				// 	continue
-				// }
-				log.Printf("ошибка при получении записи из Нетлаба (GetItemsList) netlabCode = %s: %s\n", (*items)[i].ServiceCode, err)
-				continue
+				itemRemainsNetlab, err := netlabReq.GetItemsByItemIdFormatted((*items)[i].ServiceCode, token)
+				if err != nil || (itemRemainsNetlab == netlabTypes.ItemNetlab{}) {
+					stockList[(*items)[i].ServiceCode] = common.StockList{}
+					log.Printf("ошибка при получении записи из Нетлаба (GetItemsList) netlabCode = %s: %s\n", (*items)[i].ServiceCode, err)
+					continue
+				}
+				itemCatalog = itemRemainsNetlab
+				// log.Printf("ошибка при получении записи из Нетлаба (GetItemsList) netlabCode = %s: %s\n", (*items)[i].ServiceCode, err)
+				// continue
 			}
 			rub_price := itemCatalog.Price * currency
 			half_rub_price := float32(math.Ceil(rub_price * 100))
@@ -223,3 +223,5 @@ func (srv *NetlabService) GetOrgName() string {
 func (srv *NetlabService) GetStoreName() string {
 	return srv.storeName
 }
+
+func (srv *NetlabService) Finalize() {}

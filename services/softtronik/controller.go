@@ -156,6 +156,7 @@ func (srv *SofttronikService) GetStocksList(ctx context.Context, dbInstance inte
 		for i := range *items {
 			itemCatalog, ok := itemStockSofttronik[(*items)[i].Article]
 			if !ok {
+				stockList[(*items)[i].ServiceCode] = common.StockList{}
 				//itemRemainsSofttronik, err = softtronikReq.GetItemsByItemIdFormatted(item.Service, token)
 				//if err != nil {
 				log.Printf("Ошибка при получении записи с Софт-троника (updateRemainsMS) softtronikCode = %s\n", (*items)[i].ServiceCode)
@@ -214,3 +215,5 @@ func (srv *SofttronikService) GetOrgName() string {
 func (srv *SofttronikService) GetStoreName() string {
 	return srv.storeName
 }
+
+func (srv *SofttronikService) Finalize() {}

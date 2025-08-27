@@ -10,6 +10,13 @@ import (
 	"strings"
 )
 
+var (
+	blacklist map[string]bool = map[string]bool{
+		"CH3-WCA": true,
+		"CH3":     true,
+	}
+)
+
 // Заносим новые артикула в БД
 func AddNewRecords(ctx context.Context, dbInstance interfaceDB.DB, service common.Service) error {
 	var ServiceName string = service.GetSystemName()
@@ -28,6 +35,10 @@ func AddNewRecords(ctx context.Context, dbInstance interfaceDB.DB, service commo
 		var countRecords int = 0
 		//цикл по списку артикулов
 		for i := range *articleItems {
+			if blacklist[(*articleItems)[i].Article] {
+				log.Printf("%s (AddNewRecords): артикул %s пропущен (чёрный список)\n", ServiceName, (*articleItems)[i].Article)
+				continue
+			}
 			lowerBrand := strings.ToLower((*articleItems)[i].Brand)
 			if strings.Contains(lowerBrand, "dahua") || strings.Contains(lowerBrand, "tenda") {
 				newCodesIDs := typesDB.CodesIDs{

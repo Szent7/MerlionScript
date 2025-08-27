@@ -41,6 +41,8 @@ type Service interface {
 
 	GetOrgName() string
 	GetStoreName() string
+
+	Finalize()
 }
 
 type ArticleList struct {

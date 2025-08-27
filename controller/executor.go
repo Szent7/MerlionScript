@@ -13,5 +13,6 @@ func ExecuteService(ctx context.Context, dbInstance *db.DB) {
 		src.CreateNewPositionsERP(ctx, dbInstance, v.ServiceInstance, common.MainERP)
 		src.UpdateRemainsERP(ctx, dbInstance, v.ServiceInstance, common.MainERP)
 		src.UploadAllImages(ctx, dbInstance, v.ServiceInstance, common.MainERP)
+		v.ServiceInstance.Finalize()
 	}
 }

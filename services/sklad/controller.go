@@ -6,6 +6,7 @@ import (
 	skladTypes "MerlionScript/services/sklad/types"
 	"MerlionScript/utils/db/typesDB"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 )
@@ -116,7 +117,9 @@ func (srv *SkladERP) CreateItem(item *typesDB.CodesIDs, newId string, itemName s
 	}
 	response, err := skladReq.CreateItem(newItem)
 	if err != nil || response.StatusCode != 200 {
-		log.Printf("Ошибка при создании записи на МС (createNewPositionsMS) merlionCode = %s: %s\n", item.MoySkladCode, err)
+		log.Printf("Ошибка при создании записи на МС (createNewPositionsMS) erpCode = %s: %s\n", item.MoySkladCode, err)
+		fmt.Println(response.StatusCode)
+		fmt.Println(string(response.Body))
 		return err
 	}
 
